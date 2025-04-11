@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
 import { Vector3, Raycaster, Object3D } from 'three'
 import { PointerLockControls } from '@react-three/drei'
@@ -9,7 +9,7 @@ interface FirstPersonControlsProps {
 }
 
 const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({ 
-  speed = 5, 
+  speed = 50, 
   lookSpeed = 0.1 
 }) => {
   const { camera, gl } = useThree()
@@ -23,6 +23,11 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
   const direction = useRef(new Vector3())
   const prevTime = useRef(performance.now())
   const raycaster = useRef(new Raycaster(new Vector3(), new Vector3(0, -1, 0), 0, 10))
+  const speedRef = useRef(speed);
+
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
   
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -72,12 +77,14 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
       direction.current.x = Number(moveRight.current) - Number(moveLeft.current)
       direction.current.normalize()
       
+      const movementSpeed = speedRef.current; // Use the ref to get the latest speed value
+
       // Apply movement in camera direction
       if (moveForward.current || moveBackward.current) {
-        velocity.current.z -= direction.current.z * speed * delta
+        velocity.current.z -= direction.current.z * 70 * delta;
       }
       if (moveLeft.current || moveRight.current) {
-        velocity.current.x -= direction.current.x * speed * delta
+        velocity.current.x -= direction.current.x * 70 * delta;
       }
       
       // Apply friction
@@ -105,7 +112,7 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
     }
   })
 
-  return <PointerLockControls ref={controls} args={[camera, gl.domElement]} />
+  return <PointerLockControls ref={controls} camera={camera} domElement={gl.domElement} />
 }
 
 export default FirstPersonControls

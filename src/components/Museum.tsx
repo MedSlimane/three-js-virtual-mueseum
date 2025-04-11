@@ -11,12 +11,24 @@ const Museum: React.FC<MuseumProps> = ({ setInfoText }) => {
   const { camera } = useThree();
   const [activeExhibit, setActiveExhibit] = useState<string | null>(null);
 
-  // You can add additional exhibit data here
   const exhibits = [
     { 
       id: 'operatingRoom', 
       name: 'Operating Room',
-      description: 'This is an operating room from Charité University Hospital, featuring modern surgical equipment and technology.'
+      description: 'This is an operating room from Charité University Hospital, featuring modern surgical equipment and technology.',
+      modelPath: '/charite_university_hospital_-_operating_room.glb',
+      position: [0, 0, -5], // Adjusted position to bring closer
+      scale: 1,
+      rotation: [0, 0, 0]
+    },
+    {
+      id: 'museumHall',
+      name: 'Museum Hall',
+      description: 'The grand hall of the museum, showcasing its architectural beauty.',
+      modelPath: '/the_mardou_museum.glb',
+      position: [0, 0, 0], // Adjusted position to bring closer
+      scale: 1.5, // Increased scale
+      rotation: [0, 0, 0]
     }
   ];
 
@@ -52,13 +64,16 @@ const Museum: React.FC<MuseumProps> = ({ setInfoText }) => {
       <PerspectiveCamera makeDefault position={[0, 1.6, 5]} fov={60} />
 
       {/* Museum room model */}
-      <ModelLoader
-        modelPath="/charite_university_hospital_-_operating_room.glb"
-        position={[0, 0, 0]}
-        scale={1}
-        rotation={[0, 0, 0]}
-        onClick={() => handleModelClick('operatingRoom')}
-      />
+      {exhibits.map(exhibit => (
+        <ModelLoader
+          key={exhibit.id}
+          modelPath={exhibit.modelPath}
+          position={exhibit.position}
+          scale={exhibit.scale}
+          rotation={exhibit.rotation}
+          onClick={() => handleModelClick(exhibit.id)}
+        />
+      ))}
 
       {/* Floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
