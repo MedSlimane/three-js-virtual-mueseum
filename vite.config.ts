@@ -6,16 +6,17 @@ import path from 'path'
 export default defineConfig({
   plugins: [
     react({
-      // Use React Three Fiber as the JSX import source
-      jsxImportSource: '@react-three/fiber',
+      // Use React as the JSX runtime
+      jsxRuntime: 'automatic',
+      jsxImportSource: 'react',
     }),
   ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      // Redirect JSX runtime imports to the main fiber package
+      // Add alias for jsx runtime to fix the import error
       '@react-three/fiber/jsx-runtime': '@react-three/fiber',
-      '@react-three/fiber/jsx-dev-runtime': '@react-three/fiber',
+      '@react-three/fiber/jsx-dev-runtime': '@react-three/fiber'
     },
   },
   assetsInclude: ['**/*.glb'],

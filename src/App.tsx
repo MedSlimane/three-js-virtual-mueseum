@@ -1,5 +1,5 @@
-import 'react/jsx-runtime';
-// Import './index.css';
+/** @jsxImportSource react */
+import React from 'react';
 import './index.css';
 import MuseumCanvas from './components/MuseumCanvas';
 
