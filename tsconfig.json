@@ -13,7 +13,8 @@
     /* Language and Environment */
     "target": "ESNext",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     "lib": ["DOM", "DOM.Iterable", "ESNext"],            /* Specify a set of bundled library declaration files that describe the target runtime environment. */
-    "jsx": "react-jsx",                                  /* Specify what JSX code is generated. */
+    "jsx": "react-jsx",
+    "jsxImportSource": "@react-three/fiber",
     "useDefineForClassFields": true,                     /* Emit ECMAScript-standard-compliant class fields. */
     // "libReplacement": true,                           /* Enable lib replacement. */
     // "experimentalDecorators": true,                   /* Enable experimental support for legacy experimental decorators. */
