@@ -16,6 +16,7 @@ import { SphygmomanometerMini } from './SphygmomanometerMini';
 import Controls from './Controls';
 import FirstPersonControls from './FirstPersonControls';
 import InfoPanel from './InfoPanel';
+import CoordinatesMenu from './CoordinatesMenu';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { ACESFilmicToneMapping, PMREMGenerator, HemisphereLight, DirectionalLight, Vector3, MathUtils } from 'three';
@@ -116,11 +117,17 @@ const MuseumCanvas: React.FC = () => {
       if (e.key === '1') setMode('translate');
       if (e.key === '2') setMode('scale');
       if (e.key.toLowerCase() === 'r') setMiniParams(undefined);
-      if (e.key.toLowerCase() === 'f') setControlMode(prev => prev === 'orbit' ? 'firstPerson' : 'orbit');
+      if (e.key.toLowerCase() === 'f') {
+        // Force exit pointer lock if switching from first person to orbit mode
+        if (controlMode === 'firstPerson' && document.pointerLockElement) {
+          document.exitPointerLock();
+        }
+        setControlMode(prev => prev === 'orbit' ? 'firstPerson' : 'orbit');
+      }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, []);
+  }, [controlMode]);
 
   return (
     <React.Fragment>
@@ -132,6 +139,31 @@ const MuseumCanvas: React.FC = () => {
       />
       
       <InfoPanel text={positionInfo} />
+      
+      <CoordinatesMenu
+        objects={{
+          operatingRoom: miniParams || { position: [0, 0, 0], scale: [1, 1, 1] },
+          dnaLabMachine: dnaParams || { position: [0, 0, 2], scale: [1, 1, 1] },
+          humanDna: humanDnaParams || { position: [2, 0, 0], scale: [1, 1, 1] },
+          hivVirus: hivParams || { position: [-2, 0, 0], scale: [1, 1, 1] },
+          laparoscopicTrocar: trocarParams || { position: [2, 0, 2], scale: [1, 1, 1] },
+          medicalMonitor: monitorParams || { position: [-2, 0, 2], scale: [1, 1, 1] },
+          medicalSyringe: syringeParams || { position: [0, 0, -2], scale: [1, 1, 1] },
+          sciFiMri: mriParams || { position: [-2, 0, -2], scale: [1, 1, 1] },
+          sphygmomanometer: sphygParams || { position: [2, 0, -2], scale: [1, 1, 1] }
+        }}
+        onUpdate={{
+          operatingRoom: (pos, scl) => setMiniParams({ position: pos, scale: scl }),
+          dnaLabMachine: (pos, scl) => setDnaParams({ position: pos, scale: scl }),
+          humanDna: (pos, scl) => setHumanDnaParams({ position: pos, scale: scl }),
+          hivVirus: (pos, scl) => setHivParams({ position: pos, scale: scl }),
+          laparoscopicTrocar: (pos, scl) => setTrocarParams({ position: pos, scale: scl }),
+          medicalMonitor: (pos, scl) => setMonitorParams({ position: pos, scale: scl }),
+          medicalSyringe: (pos, scl) => setSyringeParams({ position: pos, scale: scl }),
+          sciFiMri: (pos, scl) => setMriParams({ position: pos, scale: scl }),
+          sphygmomanometer: (pos, scl) => setSphygParams({ position: pos, scale: scl })
+        }}
+      />
       
       <Canvas
         shadows
@@ -188,7 +220,7 @@ const MuseumCanvas: React.FC = () => {
         {/* Overlay showing current shortcuts */}
         <Html fullscreen className="help">
           <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.5)', padding: '5px 10px', borderRadius: '4px' }}>
-            Shortcuts: [1] Translate | [2] Scale | [R] Reset | [F] Toggle Controls
+            Shortcuts: [1] Translate | [2] Scale | [R] Reset | [F] Toggle Controls | [M] Toggle Menu
           </div>
         </Html>
 

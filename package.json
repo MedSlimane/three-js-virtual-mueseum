@@ -16,6 +16,7 @@
   "description": "",
   "dependencies": {
     "@react-three/drei": "^10.0.6",
+    "@react-three/eslint-plugin": "^0.1.2",
     "@react-three/fiber": "^9.1.2",
     "@types/three": "^0.175.0",
     "react": "^19.1.0",

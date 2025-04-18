@@ -39,6 +39,13 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
   // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip handling key events when target is an input element
+      if (e.target instanceof HTMLInputElement || 
+          e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLSelectElement) {
+        return;
+      }
+      
       switch (e.code) {
         case 'KeyW': case 'ArrowUp': moveState.current.forward = true; break;
         case 'KeyS': case 'ArrowDown': moveState.current.backward = true; break;
@@ -59,6 +66,13 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      // Skip handling key events when target is an input element
+      if (e.target instanceof HTMLInputElement || 
+          e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLSelectElement) {
+        return;
+      }
+      
       switch (e.code) {
         case 'KeyW': case 'ArrowUp': moveState.current.forward = false; break;
         case 'KeyS': case 'ArrowDown': moveState.current.backward = false; break;
@@ -75,8 +89,56 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
+      
+      // Explicitly unlock pointer on cleanup
+      if (controlsRef.current && isLocked) {
+        controlsRef.current.unlock();
+      }
+      
+      // Reset movement state
+      moveState.current = {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false
+      };
     };
   }, [isLocked]);
+
+  // Cleanup function to ensure pointer is released when component unmounts
+  useEffect(() => {
+    return () => {
+      if (controlsRef.current) {
+        controlsRef.current.unlock();
+        setIsLocked(false);
+        
+        // Force release pointer lock at the browser level for extra safety
+        if (document.pointerLockElement) {
+          document.exitPointerLock();
+        }
+      }
+    };
+  }, []);
+
+  // Prevent accidental pointer lock from canvas clicks
+  useEffect(() => {
+    // Completely disable the automatic pointer lock on canvas clicks
+    const originalClickHandler = gl.domElement.onclick;
+    
+    // Replace with handler that prevents pointer lock
+    gl.domElement.onclick = (event) => {
+      // Prevent default behavior
+      event.stopPropagation();
+      event.preventDefault();
+    };
+    
+    // Cleanup function to restore original click handler when component unmounts
+    return () => {
+      gl.domElement.onclick = originalClickHandler;
+    };
+  }, [gl]);
 
   // Handle movement in the frame loop
   useFrame(() => {
@@ -111,11 +173,26 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
       }
       
       prevTime.current = time;
-      
-      // Debug camera position - uncomment if needed
-      // console.log(`Camera position: ${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}, ${camera.position.z.toFixed(2)}`);
     }
   });
+
+  // Toggle camera mode button styles
+  const buttonStyle = {
+    position: 'absolute' as 'absolute',
+    bottom: '20px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    padding: '10px 20px',
+    background: isLocked ? '#f44336' : '#4CAF50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    fontWeight: 'bold',
+    fontSize: '16px',
+    cursor: 'pointer',
+    zIndex: 101,
+    boxShadow: '0 2px 5px rgba(0,0,0,0.3)'
+  };
 
   return (
     <>
@@ -124,48 +201,27 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
         camera={camera} 
         domElement={gl.domElement}
         onLock={() => setIsLocked(true)}
-        onUnlock={() => setIsLocked(false)}
+        onUnlock={() => {
+          setIsLocked(false);
+          // Force the pointer to be released
+          if (document.pointerLockElement) {
+            document.exitPointerLock();
+          }
+        }}
       />
       
-      {!isLocked && (
-        <Html fullscreen>
-          <div className="firstperson-overlay"
-            onClick={() => controlsRef.current?.lock()}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: 'rgba(0,0,0,0.5)',
-              color: 'white',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 100,
-              cursor: 'pointer',
-              fontSize: '1.2em'
-            }}
-          >
-            <div className="firstperson-instructions"
-              style={{ 
-                background: 'rgba(0,0,0,0.7)', 
-                padding: '20px', 
-                borderRadius: '5px', 
-                textAlign: 'center' 
-              }}
-            >
-              Click to enable first-person navigation<br /><br />
-              <b>WASD/Arrows</b>: Move around<br />
-              <b>Space</b>: Move up<br />
-              <b>Shift</b>: Move down<br />
-              <b>L</b>: Toggle mouse lock<br />
-              <b>Mouse</b>: Look around
-            </div>
-          </div>
-        </Html>
-      )}
+      {/* Camera Mode Toggle Button - always visible */}
+      <Html fullscreen>
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent event from bubbling up
+            isLocked ? controlsRef.current?.unlock() : controlsRef.current?.lock();
+          }}
+          style={buttonStyle}
+        >
+          {isLocked ? 'Exit Camera Mode (L)' : 'Enter Camera Mode (L)'}
+        </button>
+      </Html>
     </>
   );
 };

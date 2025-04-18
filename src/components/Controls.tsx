@@ -13,12 +13,24 @@ const Controls: React.FC<ControlsProps> = ({
   controlMode,
   setControlMode
 }) => {
+  const handleControlModeChange = () => {
+    // Force exit pointer lock if switching from first person to orbit mode
+    if (controlMode === 'firstPerson' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    
+    // Switch mode after ensuring pointer is released
+    setTimeout(() => {
+      setControlMode(controlMode === 'orbit' ? 'firstPerson' : 'orbit');
+    }, 50);
+  };
+
   return (
     <div className="controls-panel">
       <button onClick={() => setDebug(!debug)}>
         {debug ? 'Hide Stats' : 'Show Stats'}
       </button>
-      <button onClick={() => setControlMode(controlMode === 'orbit' ? 'firstPerson' : 'orbit')}>
+      <button onClick={handleControlModeChange}>
         {controlMode === 'orbit' ? 'First Person Mode' : 'Orbit Mode'}
       </button>
     </div>
