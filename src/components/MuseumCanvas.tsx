@@ -16,6 +16,9 @@ import { SphygmomanometerMini } from './SphygmomanometerMini';
 import Controls from './Controls';
 import FirstPersonControls from './FirstPersonControls';
 import InfoPanel from './InfoPanel';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { ACESFilmicToneMapping, PMREMGenerator, HemisphereLight, DirectionalLight, Vector3, MathUtils } from 'three';
 
 // Position tracker component that updates in real-time
 interface PositionTrackerProps {
@@ -134,6 +137,50 @@ const MuseumCanvas: React.FC = () => {
         shadows
         camera={{ position: [12, 8, 12], fov: 75 }}
         style={{ width: '100%', height: '100%' }}
+        onCreated={({ gl, scene }) => {
+          // Renderer tone mapping and exposure
+          gl.toneMapping = ACESFilmicToneMapping;
+          gl.toneMappingExposure = 0.6;
+
+          // Sky dome setup
+          const sky = new Sky();
+          sky.scale.setScalar(450000);
+          sky.material.uniforms.turbidity.value = 10;
+          sky.material.uniforms.rayleigh.value = 2;
+          sky.material.uniforms.mieCoefficient.value = 0.005;
+          sky.material.uniforms.mieDirectionalG.value = 0.8;
+          const sunPos = new Vector3();
+          const phi = MathUtils.degToRad(90 - 25);
+          const theta = MathUtils.degToRad(180);
+          sunPos.setFromSphericalCoords(1, phi, theta);
+          sky.material.uniforms.sunPosition.value.copy(sunPos);
+          scene.add(sky);
+
+          // HDRI environment map
+          new RGBELoader().setPath('/').load('venice_sunset_1k.hdr', (hdr) => {
+            const pmrem = new PMREMGenerator(gl);
+            const envMap = pmrem.fromEquirectangular(hdr).texture;
+            scene.environment = envMap;
+            // apply uniform envMapIntensity to all meshes
+            scene.traverse((child) => {
+              if ((child as any).isMesh) {
+                (child as any).material.envMapIntensity = 0.5;
+              }
+            });
+            hdr.dispose();
+            pmrem.dispose();
+          });
+
+          // Lights: Hemisphere and Sun directional
+          const hemi = new HemisphereLight(0xffffff, 0x222233, 0.05);
+          scene.add(hemi);
+          const sun = new DirectionalLight(0xffffff, 1.2);
+          sun.position.set(20, 30, -10);
+          sun.castShadow = true;
+          sun.shadow.mapSize.set(2048, 2048);
+          sun.shadow.normalBias = 0.005;
+          scene.add(sun);
+        }}
       >
         {/* Display stats when debug mode is active */}
         {debug && <Stats />}
