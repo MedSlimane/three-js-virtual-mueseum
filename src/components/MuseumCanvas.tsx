@@ -7,6 +7,12 @@ import Museum from './Museum';
 import OperatingRoomMini from './OperatingRoomMini';
 import DnaLabMachineMini from './DnaLabMachineMini';
 import HumanDnaMini from './HumanDnaMini';
+import HivVirusSectionedMini from './HivVirusSectionedMini';
+import LaparoscopicTrocarMini from './LaparoscopicTrocarMini';
+import { MedicalMonitorMini } from './MedicalMonitorMini';
+import { MedicalSyringeMini } from './MedicalSyringeMini';
+import { SciFiMriMini } from './SciFiMriMini';
+import { SphygmomanometerMini } from './SphygmomanometerMini';
 import Controls from './Controls';
 import FirstPersonControls from './FirstPersonControls';
 import InfoPanel from './InfoPanel';
@@ -37,6 +43,12 @@ const MuseumCanvas: React.FC = () => {
   const dnaStorageKey = 'dna-lab-machine-mini-params';
   const humanDnaStorageKey = 'human-dna-mini-params';
   const storageKey = 'museum-mini-params';
+  const hivStorageKey = 'hiv-virus-mini-params';
+  const trocarStorageKey = 'laparoscopic-trocar-mini-params';
+  const monitorStorageKey = 'medical-monitor-mini-params';
+  const syringeStorageKey = 'medical-syringe-mini-params';
+  const mriStorageKey = 'sci-fi-mri-mini-params';
+  const sphygStorageKey = 'sphygmomanometer-mini-params';
 
   // Load persisted params
   const saved = localStorage.getItem(storageKey);
@@ -45,16 +57,40 @@ const MuseumCanvas: React.FC = () => {
   const parsedDna = savedDna ? JSON.parse(savedDna) as { position: number[]; scale: number[] } : undefined;
   const savedHuman = localStorage.getItem(humanDnaStorageKey);
   const parsedHuman = savedHuman ? JSON.parse(savedHuman) as { position: number[]; scale: number[] } : undefined;
+  const savedHiv = localStorage.getItem(hivStorageKey);
+  const parsedHiv = savedHiv ? JSON.parse(savedHiv) as { position: number[]; scale: number[] } : undefined;
+  const savedTrocar = localStorage.getItem(trocarStorageKey);
+  const parsedTrocar = savedTrocar ? JSON.parse(savedTrocar) as { position: number[]; scale: number[] } : undefined;
+  const savedMonitor = localStorage.getItem(monitorStorageKey);
+  const parsedMonitor = savedMonitor ? JSON.parse(savedMonitor) as { position: number[]; scale: number[] } : undefined;
+  const savedSyringe = localStorage.getItem(syringeStorageKey);
+  const parsedSyringe = savedSyringe ? JSON.parse(savedSyringe) as { position: number[]; scale: number[] } : undefined;
+  const savedMri = localStorage.getItem(mriStorageKey);
+  const parsedMri = savedMri ? JSON.parse(savedMri) as { position: number[]; scale: number[] } : undefined;
+  const savedSphyg = localStorage.getItem(sphygStorageKey);
+  const parsedSphyg = savedSphyg ? JSON.parse(savedSphyg) as { position: number[]; scale: number[] } : undefined;
   const [mode, setMode] = useState<'translate' | 'scale'>('translate');
   const [miniParams, setMiniParams] = useState(parsed);
   const [dnaParams, setDnaParams] = useState(parsedDna);
   const [humanDnaParams, setHumanDnaParams] = useState(parsedHuman);
+  const [hivParams, setHivParams] = useState(parsedHiv);
+  const [trocarParams, setTrocarParams] = useState(parsedTrocar);
+  const [monitorParams, setMonitorParams] = useState(parsedMonitor);
+  const [syringeParams, setSyringeParams] = useState(parsedSyringe);
+  const [mriParams, setMriParams] = useState(parsedMri);
+  const [sphygParams, setSphygParams] = useState(parsedSphyg);
   const [debug, setDebug] = useState(false);
   const [controlMode, setControlMode] = useState<'orbit' | 'firstPerson'>('orbit');
   const [positionInfo, setPositionInfo] = useState<string>('Position data loading...');
   const operatingRoomRef = useRef<Group>(null!);
   const dnaLabRef = useRef<Group>(null!);
   const humanDnaRef = useRef<Group>(null!);
+  const hivRef = useRef<Group>(null!);
+  const trocarRef = useRef<Group>(null!);
+  const monitorRef = useRef<Group>(null!);
+  const syringeRef = useRef<Group>(null!);
+  const mriRef = useRef<Group>(null!);
+  const sphygRef = useRef<Group>(null!);
 
   // Persist last params to localStorage on unmount
   useEffect(() => {
@@ -62,8 +98,14 @@ const MuseumCanvas: React.FC = () => {
       if (miniParams) localStorage.setItem(storageKey, JSON.stringify(miniParams));
       if (dnaParams) localStorage.setItem(dnaStorageKey, JSON.stringify(dnaParams));
       if (humanDnaParams) localStorage.setItem(humanDnaStorageKey, JSON.stringify(humanDnaParams));
+      if (hivParams) localStorage.setItem(hivStorageKey, JSON.stringify(hivParams));
+      if (trocarParams) localStorage.setItem(trocarStorageKey, JSON.stringify(trocarParams));
+      if (monitorParams) localStorage.setItem(monitorStorageKey, JSON.stringify(monitorParams));
+      if (syringeParams) localStorage.setItem(syringeStorageKey, JSON.stringify(syringeParams));
+      if (mriParams) localStorage.setItem(mriStorageKey, JSON.stringify(mriParams));
+      if (sphygParams) localStorage.setItem(sphygStorageKey, JSON.stringify(sphygParams));
     };
-  }, [miniParams, dnaParams, humanDnaParams]);
+  }, [miniParams, dnaParams, humanDnaParams, hivParams, trocarParams, monitorParams, syringeParams, mriParams, sphygParams]);
 
   // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode
   useEffect(() => {
@@ -157,6 +199,84 @@ const MuseumCanvas: React.FC = () => {
                   : [1, 1, 1]
               } : undefined}
               onUpdate={(pos, scl) => setHumanDnaParams({ position: pos, scale: scl })}
+            />
+            <HivVirusSectionedMini
+              ref={hivRef}
+              mode={mode}
+              initialParams={hivParams ? {
+                position: Array.isArray(hivParams.position) && hivParams.position.length === 3
+                  ? hivParams.position as [number, number, number]
+                  : [0, 0, 0],
+                scale: Array.isArray(hivParams.scale) && hivParams.scale.length === 3
+                  ? hivParams.scale as [number, number, number]
+                  : [1, 1, 1]
+              } : undefined}
+              onUpdate={(pos, scl) => setHivParams({ position: pos, scale: scl })}
+            />
+            <LaparoscopicTrocarMini
+              ref={trocarRef}
+              mode={mode}
+              initialParams={trocarParams ? {
+                position: Array.isArray(trocarParams.position) && trocarParams.position.length === 3
+                  ? trocarParams.position as [number, number, number]
+                  : [0, 0, 0],
+                scale: Array.isArray(trocarParams.scale) && trocarParams.scale.length === 3
+                  ? trocarParams.scale as [number, number, number]
+                  : [1, 1, 1]
+              } : undefined}
+              onUpdate={(pos, scl) => setTrocarParams({ position: pos, scale: scl })}
+            />
+            <MedicalMonitorMini
+              ref={monitorRef}
+              mode={mode}
+              initialParams={monitorParams ? {
+                position: Array.isArray(monitorParams.position) && monitorParams.position.length === 3
+                  ? monitorParams.position as [number, number, number]
+                  : [0, 0, 0],
+                scale: Array.isArray(monitorParams.scale) && monitorParams.scale.length === 3
+                  ? monitorParams.scale as [number, number, number]
+                  : [1, 1, 1]
+              } : undefined}
+              onUpdate={(pos, scl) => setMonitorParams({ position: pos, scale: scl })}
+            />
+            <MedicalSyringeMini
+              ref={syringeRef}
+              mode={mode}
+              initialParams={syringeParams ? {
+                position: Array.isArray(syringeParams.position) && syringeParams.position.length === 3
+                  ? syringeParams.position as [number, number, number]
+                  : [0, 0, 0],
+                scale: Array.isArray(syringeParams.scale) && syringeParams.scale.length === 3
+                  ? syringeParams.scale as [number, number, number]
+                  : [1, 1, 1]
+              } : undefined}
+              onUpdate={(pos, scl) => setSyringeParams({ position: pos, scale: scl })}
+            />
+            <SciFiMriMini
+              ref={mriRef}
+              mode={mode}
+              initialParams={mriParams ? {
+                position: Array.isArray(mriParams.position) && mriParams.position.length === 3
+                  ? mriParams.position as [number, number, number]
+                  : [0, 0, 0],
+                scale: Array.isArray(mriParams.scale) && mriParams.scale.length === 3
+                  ? mriParams.scale as [number, number, number]
+                  : [1, 1, 1]
+              } : undefined}
+              onUpdate={(pos, scl) => setMriParams({ position: pos, scale: scl })}
+            />
+            <SphygmomanometerMini
+              ref={sphygRef}
+              mode={mode}
+              initialParams={sphygParams ? {
+                position: Array.isArray(sphygParams.position) && sphygParams.position.length === 3
+                  ? sphygParams.position as [number, number, number]
+                  : [0, 0, 0],
+                scale: Array.isArray(sphygParams.scale) && sphygParams.scale.length === 3
+                  ? sphygParams.scale as [number, number, number]
+                  : [1, 1, 1]
+              } : undefined}
+              onUpdate={(pos, scl) => setSphygParams({ position: pos, scale: scl })}
             />
           </Museum>
           
