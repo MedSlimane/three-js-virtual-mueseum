@@ -100,24 +100,25 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
     onUpdate[selectedObject](newValues.position, newValues.scale);
   };
 
+  // Function to export all current object parameters to a JSON file
+  const exportCoordinates = () => {
+    const data = JSON.stringify(objects, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'coordinates.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (!isOpen) {
     return (
       <button 
-        className="coordinates-menu-toggle" 
+        className="coordinates-menu-toggle"
         onClick={() => setIsOpen(true)}
-        style={{
-          position: 'absolute',
-          top: '80px',
-          right: '20px',
-          padding: '8px 12px',
-          background: '#4CAF50',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          zIndex: 1000,
-          pointerEvents: 'auto'
-        }}
       >
         Show Coordinates (M)
       </button>
@@ -127,57 +128,40 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
   const currentObject = selectedObject ? objects[selectedObject] : null;
 
   return (
-    <div 
-      className="coordinates-menu"
-      style={{
-        position: 'absolute',
-        top: '80px',
-        right: '20px',
-        padding: '15px',
-        background: 'rgba(0, 0, 0, 0.8)',
-        borderRadius: '6px',
-        color: 'white',
-        zIndex: 1000,
-        width: '300px',
-        maxHeight: '80vh',
-        overflowY: 'auto',
-        pointerEvents: 'auto'
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <h3 style={{ margin: 0 }}>Object Coordinates</h3>
+    <div className="coordinates-menu">
+      <div 
+        className="coordinates-header"
+      >
+        <h3 
+          
+        >Object Coordinates</h3>
         <div>
-          <span style={{ fontSize: '0.8em', marginRight: '10px' }}>Press 'M' to toggle</span>
+          <span 
+            
+          >Press 'M' to toggle</span>
           <button 
             onClick={() => setIsOpen(false)}
-            style={{
-              background: 'transparent',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '5px',
-              fontSize: '16px'
-            }}
+             
           >
             ✕
+          </button>
+          <button
+            onClick={exportCoordinates}
+            className="save-btn"
+          >
+            💾
           </button>
         </div>
       </div>
 
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="object-select" style={{ display: 'block', marginBottom: '5px' }}>Select Object:</label>
+      <div className="object-select-container">
+        <label htmlFor="object-select" 
+         
+        >Select Object:</label>
         <select 
           id="object-select"
           value={selectedObject || ''}
           onChange={(e) => setSelectedObject(e.target.value as keyof typeof objects)}
-          style={{
-            width: '100%',
-            padding: '8px',
-            backgroundColor: '#333',
-            color: 'white',
-            border: '1px solid #555',
-            borderRadius: '4px'
-          }}
         >
           {Object.keys(objects).map((key) => (
             <option key={key} value={key}>
@@ -188,11 +172,15 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
       </div>
 
       {currentObject && (
-        <div>
-          <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ marginBottom: '10px' }}>Position</h4>
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="position-x" style={{ display: 'block', marginBottom: '5px' }}>X: {currentObject.position[0].toFixed(2)}</label>
+        <>
+          <div className="coordinates-section">
+            <h4 
+            
+            >Position</h4>
+            <div className="field-group">
+              <label htmlFor="position-x" 
+               
+              >X: {currentObject.position[0].toFixed(2)}</label>
               <input
                 id="position-x"
                 type="range"
@@ -201,11 +189,12 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
                 step="0.1"
                 value={currentObject.position[0]}
                 onChange={(e) => updateValue('position', 0, parseFloat(e.target.value))}
-                style={{ width: '100%' }}
               />
             </div>
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="position-y" style={{ display: 'block', marginBottom: '5px' }}>Y: {currentObject.position[1].toFixed(2)}</label>
+            <div className="field-group">
+              <label htmlFor="position-y" 
+               
+              >Y: {currentObject.position[1].toFixed(2)}</label>
               <input
                 id="position-y"
                 type="range"
@@ -214,11 +203,12 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
                 step="0.1"
                 value={currentObject.position[1]}
                 onChange={(e) => updateValue('position', 1, parseFloat(e.target.value))}
-                style={{ width: '100%' }}
               />
             </div>
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="position-z" style={{ display: 'block', marginBottom: '5px' }}>Z: {currentObject.position[2].toFixed(2)}</label>
+            <div className="field-group">
+              <label htmlFor="position-z" 
+               
+              >Z: {currentObject.position[2].toFixed(2)}</label>
               <input
                 id="position-z"
                 type="range"
@@ -227,15 +217,18 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
                 step="0.1"
                 value={currentObject.position[2]}
                 onChange={(e) => updateValue('position', 2, parseFloat(e.target.value))}
-                style={{ width: '100%' }}
               />
             </div>
           </div>
 
-          <div>
-            <h4 style={{ marginBottom: '10px' }}>Scale</h4>
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="scale-x" style={{ display: 'block', marginBottom: '5px' }}>X: {currentObject.scale[0].toFixed(2)}</label>
+          <div className="coordinates-section">
+            <h4 
+            
+            >Scale</h4>
+            <div className="field-group">
+              <label htmlFor="scale-x" 
+               
+              >X: {currentObject.scale[0].toFixed(2)}</label>
               <input
                 id="scale-x"
                 type="range"
@@ -244,11 +237,12 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
                 step="0.1"
                 value={currentObject.scale[0]}
                 onChange={(e) => updateValue('scale', 0, parseFloat(e.target.value))}
-                style={{ width: '100%' }}
               />
             </div>
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="scale-y" style={{ display: 'block', marginBottom: '5px' }}>Y: {currentObject.scale[1].toFixed(2)}</label>
+            <div className="field-group">
+              <label htmlFor="scale-y" 
+               
+              >Y: {currentObject.scale[1].toFixed(2)}</label>
               <input
                 id="scale-y"
                 type="range"
@@ -257,11 +251,12 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
                 step="0.1"
                 value={currentObject.scale[1]}
                 onChange={(e) => updateValue('scale', 1, parseFloat(e.target.value))}
-                style={{ width: '100%' }}
               />
             </div>
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="scale-z" style={{ display: 'block', marginBottom: '5px' }}>Z: {currentObject.scale[2].toFixed(2)}</label>
+            <div className="field-group">
+              <label htmlFor="scale-z" 
+               
+              >Z: {currentObject.scale[2].toFixed(2)}</label>
               <input
                 id="scale-z"
                 type="range"
@@ -270,11 +265,10 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
                 step="0.1"
                 value={currentObject.scale[2]}
                 onChange={(e) => updateValue('scale', 2, parseFloat(e.target.value))}
-                style={{ width: '100%' }}
               />
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
