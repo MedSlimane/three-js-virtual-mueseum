@@ -70,3 +70,8 @@ button:hover {
   z-index: 100;
   font-size: 1.5rem;
 }
+
+/* Prevent help overlay from blocking UI interactions */
+.help {
+  pointer-events: none;
+}
