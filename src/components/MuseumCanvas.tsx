@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 import React, { Suspense, useState, useEffect, useRef } from 'react';
 import type { Group } from 'three';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls, Stats } from '@react-three/drei';
 import Museum from './Museum';
 import OperatingRoomMini from './OperatingRoomMini';
@@ -85,7 +85,7 @@ const MuseumCanvas: React.FC = () => {
   const [sphygParams, setSphygParams] = useState(parsedSphyg);
   const [debug, setDebug] = useState(false);
   const [controlMode, setControlMode] = useState<'orbit' | 'firstPerson'>('orbit');
-  const [positionInfo, setPositionInfo] = useState<string>('Position data loading...');
+  const [description, setDescription] = useState<string>('');
   const operatingRoomRef = useRef<Group>(null!);
   const dnaLabRef = useRef<Group>(null!);
   const humanDnaRef = useRef<Group>(null!);
@@ -95,6 +95,51 @@ const MuseumCanvas: React.FC = () => {
   const syringeRef = useRef<Group>(null!);
   const mriRef = useRef<Group>(null!);
   const sphygRef = useRef<Group>(null!);
+
+  // Mapping exhibits to descriptive texts
+  const objectInfos: Record<string,string> = {
+    operatingRoom: 'Operating Room: A modern surgical theater introduced in the mid-20th century that revolutionized patient care by integrating sterile techniques and advanced lighting.',
+    dnaLabMachine: 'DNA Lab Machine: Early automated DNA sequencers from the late 20th century that accelerated genetic research and diagnostics.',
+    humanDna: 'Human DNA Model: The double helix structure elucidated by Watson and Crick in 1953, foundational to molecular biology.',
+    hivVirus: 'HIV Virus Model: Depicts the virus responsible for AIDS, first identified in the early 1980s, leading to breakthroughs in antiviral therapy.',
+    laparoscopicTrocar: 'Laparoscopic Trocar: Introduced in the 1970s, enabling minimally invasive procedures and transforming surgical practices.',
+    medicalMonitor: 'Medical Monitor: Real-time patient monitoring devices that became widespread in the 1960s, improving critical care and surgical outcomes.',
+    medicalSyringe: 'Medical Syringe: A standard tool since the 1850s, refined for precision drug delivery and sterilization in modern medicine.',
+    sciFiMri: 'Sci-Fi MRI Model: Conceptual advanced imaging system showcasing MRI technology’s evolution since its introduction in 1977.',
+    sphygmomanometer: 'Sphygmomanometer: Invented in 1896 for measuring blood pressure, fundamental to modern cardiovascular diagnostics.'
+  };
+
+  // Component to update description based on camera proximity
+  function ProximityChecker() {
+    const { camera } = useThree();
+    useFrame(() => {
+      let nearest: string | null = null;
+      let minDist = Infinity;
+      const refs: Record<string, React.RefObject<Group>> = {
+        operatingRoom: operatingRoomRef,
+        dnaLabMachine: dnaLabRef,
+        humanDna: humanDnaRef,
+        hivVirus: hivRef,
+        laparoscopicTrocar: trocarRef,
+        medicalMonitor: monitorRef,
+        medicalSyringe: syringeRef,
+        sciFiMri: mriRef,
+        sphygmomanometer: sphygRef
+      };
+      for (const key in refs) {
+        const ref = refs[key];
+        if (ref.current) {
+          const dist = camera.position.distanceTo(ref.current.position);
+          if (dist < 2 && dist < minDist) {
+            nearest = key;
+            minDist = dist;
+          }
+        }
+      }
+      setDescription(nearest ? objectInfos[nearest] : '');
+    });
+    return null;
+  }
 
   // Persist last params to localStorage on unmount
   useEffect(() => {
@@ -138,7 +183,7 @@ const MuseumCanvas: React.FC = () => {
         setControlMode={setControlMode} 
       />
       
-      <InfoPanel text={positionInfo} />
+      <InfoPanel text={description || 'Approach an exhibit to learn more.'} />
       
       <CoordinatesMenu
         objects={{
@@ -219,13 +264,13 @@ const MuseumCanvas: React.FC = () => {
         
         {/* Overlay showing current shortcuts */}
         <Html fullscreen className="help">
-          <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.5)', padding: '5px 10px', borderRadius: '4px' }}>
+          <div className="shortcuts-overlay">
             Shortcuts: [1] Translate | [2] Scale | [R] Reset | [F] Toggle Controls | [M] Toggle Menu
           </div>
         </Html>
 
-        {/* Real-time position tracker */}
-        <PositionTracker groupRef={operatingRoomRef} setPositionInfo={setPositionInfo} />
+        {/* Proximity-based exhibit descriptions */}
+        <ProximityChecker />
 
         {/* Lighting setup */}
         <ambientLight intensity={0.7} />
