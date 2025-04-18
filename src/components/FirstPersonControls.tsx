@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 import React, { useEffect, useRef, useState } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { Vector3, MathUtils } from 'three';
+import { Vector3 } from 'three';
 import { PointerLockControls, Html } from '@react-three/drei';
 
 interface FirstPersonControlsProps {
@@ -31,9 +31,9 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
 
   // Set starting camera position inside museum - at entrance looking in
   useEffect(() => {
-    // Position at museum entrance at eye level (1.6m) and facing inside
-    camera.position.set(0, 1.6, 6);
-    camera.lookAt(0, 1.6, 0);
+    // Position camera just inside the entrance at eye level
+    camera.position.set(0, 1.6, 0);
+    camera.lookAt(0, 1.6, -2);
   }, [camera]);
 
   // Handle keyboard input
@@ -109,17 +109,6 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
         // Only use y movement when explicitly requested (space/shift)
         camera.position.y += direction.current.y * actualSpeed;
       }
-      
-      // Enforce boundaries to keep the user inside the museum
-      // Significantly expanded boundary values to allow full museum exploration
-      const minX = -25, maxX = 25;
-      const minY = 0.5, maxY = 10; // Lower minimum height to allow exploration of lower areas
-      const minZ = -25, maxZ = 25; // Expanded Z range to allow movement to the back of the museum
-      
-      // Apply expanded boundaries
-      camera.position.x = MathUtils.clamp(camera.position.x, minX, maxX);
-      camera.position.y = MathUtils.clamp(camera.position.y, minY, maxY);
-      camera.position.z = MathUtils.clamp(camera.position.z, minZ, maxZ);
       
       prevTime.current = time;
       
