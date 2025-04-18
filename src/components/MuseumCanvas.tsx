@@ -1,22 +1,29 @@
 /** @jsxImportSource react */
 import React, { Suspense, useState, useEffect, useRef } from 'react';
+import type { Group } from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls, Stats } from '@react-three/drei';
 import Museum from './Museum';
 import OperatingRoomMini from './OperatingRoomMini';
+import DnaLabMachineMini from './DnaLabMachineMini';
+import HumanDnaMini from './HumanDnaMini';
 import Controls from './Controls';
 import FirstPersonControls from './FirstPersonControls';
 import InfoPanel from './InfoPanel';
 
 // Position tracker component that updates in real-time
-const PositionTracker = ({ groupRef, setPositionInfo }) => {
+interface PositionTrackerProps {
+  groupRef: React.RefObject<Group>;
+  setPositionInfo: React.Dispatch<React.SetStateAction<string>>;
+}
+const PositionTracker: React.FC<PositionTrackerProps> = ({ groupRef, setPositionInfo }) => {
   useFrame(() => {
     if (groupRef.current) {
       const position = groupRef.current.position.toArray();
       const scale = groupRef.current.scale.toArray();
       
-      const positionFormatted = position.map(p => p.toFixed(2)).join(', ');
-      const scaleFormatted = scale.map(s => s.toFixed(2)).join(', ');
+      const positionFormatted = position.map((p: number) => p.toFixed(2)).join(', ');
+      const scaleFormatted = scale.map((s: number) => s.toFixed(2)).join(', ');
       
       setPositionInfo(`Position: [${positionFormatted}]\nScale: [${scaleFormatted}]`);
     }
@@ -27,23 +34,36 @@ const PositionTracker = ({ groupRef, setPositionInfo }) => {
 
 // Canvas setup for the virtual museum scene with interactive controls
 const MuseumCanvas: React.FC = () => {
+  const dnaStorageKey = 'dna-lab-machine-mini-params';
+  const humanDnaStorageKey = 'human-dna-mini-params';
   const storageKey = 'museum-mini-params';
+
   // Load persisted params
   const saved = localStorage.getItem(storageKey);
   const parsed = saved ? JSON.parse(saved) as { position: number[]; scale: number[] } : undefined;
+  const savedDna = localStorage.getItem(dnaStorageKey);
+  const parsedDna = savedDna ? JSON.parse(savedDna) as { position: number[]; scale: number[] } : undefined;
+  const savedHuman = localStorage.getItem(humanDnaStorageKey);
+  const parsedHuman = savedHuman ? JSON.parse(savedHuman) as { position: number[]; scale: number[] } : undefined;
   const [mode, setMode] = useState<'translate' | 'scale'>('translate');
   const [miniParams, setMiniParams] = useState(parsed);
+  const [dnaParams, setDnaParams] = useState(parsedDna);
+  const [humanDnaParams, setHumanDnaParams] = useState(parsedHuman);
   const [debug, setDebug] = useState(false);
   const [controlMode, setControlMode] = useState<'orbit' | 'firstPerson'>('orbit');
   const [positionInfo, setPositionInfo] = useState<string>('Position data loading...');
-  const operatingRoomRef = useRef(null);
+  const operatingRoomRef = useRef<Group>(null!);
+  const dnaLabRef = useRef<Group>(null!);
+  const humanDnaRef = useRef<Group>(null!);
 
   // Persist last params to localStorage on unmount
   useEffect(() => {
     return () => {
       if (miniParams) localStorage.setItem(storageKey, JSON.stringify(miniParams));
+      if (dnaParams) localStorage.setItem(dnaStorageKey, JSON.stringify(dnaParams));
+      if (humanDnaParams) localStorage.setItem(humanDnaStorageKey, JSON.stringify(humanDnaParams));
     };
-  }, [miniParams]);
+  }, [miniParams, dnaParams, humanDnaParams]);
 
   // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode
   useEffect(() => {
@@ -111,6 +131,32 @@ const MuseumCanvas: React.FC = () => {
                   : [1, 1, 1]
               } : undefined}
               onUpdate={(pos, scl) => setMiniParams({ position: pos, scale: scl })}
+            />
+            <DnaLabMachineMini
+              ref={dnaLabRef}
+              mode={mode}
+              initialParams={dnaParams ? {
+                position: Array.isArray(dnaParams.position) && dnaParams.position.length === 3
+                  ? dnaParams.position as [number, number, number]
+                  : [0, 0, 0],
+                scale: Array.isArray(dnaParams.scale) && dnaParams.scale.length === 3
+                  ? dnaParams.scale as [number, number, number]
+                  : [1, 1, 1]
+              } : undefined}
+              onUpdate={(pos, scl) => setDnaParams({ position: pos, scale: scl })}
+            />
+            <HumanDnaMini
+              ref={humanDnaRef}
+              mode={mode}
+              initialParams={humanDnaParams ? {
+                position: Array.isArray(humanDnaParams.position) && humanDnaParams.position.length === 3
+                  ? humanDnaParams.position as [number, number, number]
+                  : [0, 0, 0],
+                scale: Array.isArray(humanDnaParams.scale) && humanDnaParams.scale.length === 3
+                  ? humanDnaParams.scale as [number, number, number]
+                  : [1, 1, 1]
+              } : undefined}
+              onUpdate={(pos, scl) => setHumanDnaParams({ position: pos, scale: scl })}
             />
           </Museum>
           

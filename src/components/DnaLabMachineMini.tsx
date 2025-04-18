@@ -6,22 +6,21 @@ import type { GLTF } from 'three-stdlib';
 
 type GLTFResult = GLTF & { scene: Group };
 
-// Preload the OR model for performance
-useGLTF.preload('/charite_university_hospital_-_operating_room.glb');
+// Preload the DNA lab machine model for performance
+useGLTF.preload('/dna_lab_machine.glb');
 
-interface OperatingRoomMiniProps {
+interface DnaLabMachineMiniProps {
   mode: 'translate' | 'scale';
   initialParams?: { position: [number, number, number]; scale: [number, number, number] };
   onUpdate: (position: number[], scale: number[]) => void;
 }
 
-const OperatingRoomMini = forwardRef<Group, OperatingRoomMiniProps>(({ mode, initialParams, onUpdate }, ref) => {
-  const { scene } = useGLTF('/charite_university_hospital_-_operating_room.glb') as GLTFResult;
+const DnaLabMachineMini = forwardRef<Group, DnaLabMachineMiniProps>(({ mode, initialParams, onUpdate }, ref) => {
+  const { scene } = useGLTF('/dna_lab_machine.glb') as GLTFResult;
   const groupRef = useRef<Group>(null!);
   useImperativeHandle(ref, () => groupRef.current);
   const [groupReady, setGroupReady] = useState(false);
 
-  // Apply persisted/default transforms on mount
   useEffect(() => {
     if (initialParams && groupRef.current) {
       const [x, y, z] = initialParams.position;
@@ -29,18 +28,14 @@ const OperatingRoomMini = forwardRef<Group, OperatingRoomMiniProps>(({ mode, ini
       groupRef.current.position.set(x, y, z);
       groupRef.current.scale.set(sx, sy, sz);
     }
-    // Mark the group as ready after it's initialized
-    if (groupRef.current) {
-      setGroupReady(true);
-    }
+    if (groupRef.current) setGroupReady(true);
   }, [initialParams]);
 
-  // Compute uniform scale and bounding info
   const { scale, center, minY } = useMemo(() => {
     const box = new Box3().setFromObject(scene);
     const size = box.getSize(new Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 4 / maxDim; // uniform scale
+    const scale = 4 / maxDim;
     const center = box.getCenter(new Vector3());
     const minY = box.min.y;
     return { scale, center, minY };
@@ -50,11 +45,10 @@ const OperatingRoomMini = forwardRef<Group, OperatingRoomMiniProps>(({ mode, ini
     <>
       <group
         ref={groupRef}
-        name="OperatingRoom_Miniature"
+        name="DnaLabMachine_Miniature"
         scale={[scale, scale, scale]}
-        position={[0, 0.01, -2]}
+        position={[0, 0.01, 2]} // Adjust position as needed
       >
-        {/* Center model floor at origin */}
         <primitive
           object={scene}
           position={[-center.x, -minY, -center.z]}
@@ -64,7 +58,7 @@ const OperatingRoomMini = forwardRef<Group, OperatingRoomMiniProps>(({ mode, ini
       </group>
 
       {groupReady && groupRef.current && (
-        <TransformControls 
+        <TransformControls
           object={groupRef.current}
           mode={mode}
           onMouseUp={() => {
@@ -87,4 +81,4 @@ const OperatingRoomMini = forwardRef<Group, OperatingRoomMiniProps>(({ mode, ini
   );
 });
 
-export default OperatingRoomMini;
+export default DnaLabMachineMini;
