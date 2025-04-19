@@ -88,6 +88,7 @@ const MuseumCanvas: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [ambientIntensity, setAmbientIntensity] = useState(1.0); // Initial ambient intensity
   const [directionalIntensity, setDirectionalIntensity] = useState(4.0); // Initial directional intensity
+  const [playerPosition, setPlayerPosition] = useState<Vector3>(new Vector3(12, 8, 12)); // Initial camera position
   const operatingRoomRef = useRef<Group>(null!);
   const dnaLabRef = useRef<Group>(null!);
   const humanDnaRef = useRef<Group>(null!);
@@ -111,10 +112,13 @@ const MuseumCanvas: React.FC = () => {
     sphygmomanometer: 'Sphygmomanometer: Invented in 1896 for measuring blood pressure, fundamental to modern cardiovascular diagnostics.'
   };
 
-  // Component to update description based on camera proximity
-  function ProximityChecker() {
+  // Component to update description based on camera proximity and track player position
+  function ProximityAndPositionChecker() {
     const { camera } = useThree();
     useFrame(() => {
+      // Update player position state
+      setPlayerPosition(camera.position.clone());
+
       let nearest: string | null = null;
       let minDist = Infinity;
       const refs: Record<string, React.RefObject<Group>> = {
@@ -218,6 +222,7 @@ const MuseumCanvas: React.FC = () => {
           setAmbientIntensity,
           setDirectionalIntensity
         }}
+        playerPosition={playerPosition} // Pass player position
       />
       
       <Canvas
@@ -279,8 +284,8 @@ const MuseumCanvas: React.FC = () => {
           </div>
         </Html>
 
-        {/* Proximity-based exhibit descriptions */}
-        <ProximityChecker />
+        {/* Proximity-based exhibit descriptions and player position tracking */}
+        <ProximityAndPositionChecker />
 
         {/* Lighting setup */}
         <ambientLight intensity={ambientIntensity} /> {/* Use state variable */}

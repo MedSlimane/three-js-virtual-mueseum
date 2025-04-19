@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { Vector3 } from 'three'; // Import Vector3
 
 // Type definitions for object parameters
 interface ObjectParams {
@@ -45,6 +46,7 @@ interface CoordinatesMenuProps {
     setAmbientIntensity: (intensity: number) => void;
     setDirectionalIntensity: (intensity: number) => void;
   };
+  playerPosition: Vector3; // Add playerPosition prop
 }
 
 // Names to display in the UI
@@ -66,7 +68,7 @@ const getStoredMenuState = (): boolean => {
   return stored ? JSON.parse(stored) : true;
 };
 
-const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, lighting, onLightingUpdate }) => {
+const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, lighting, onLightingUpdate, playerPosition }) => {
   // Use localStorage to persist menu state across mode changes
   const [isOpen, setIsOpen] = useState(getStoredMenuState());
   const [selectedObject, setSelectedObject] = useState<keyof typeof objects | null>("operatingRoom");
@@ -139,6 +141,17 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
     onLightingUpdate.setDirectionalIntensity(intensity);
   };
 
+  // Function to move the selected object to the player's position
+  const bringObjectToPlayer = () => {
+    if (!selectedObject) return;
+    const currentObject = objects[selectedObject];
+    if (!currentObject) return;
+
+    // Use player position and current scale
+    const playerPosArray = playerPosition.toArray();
+    onUpdate[selectedObject](playerPosArray, currentObject.scale);
+  };
+
   if (!isOpen) {
     return (
       <button 
@@ -199,9 +212,10 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
       {currentObject && (
         <>
           <div className="coordinates-section">
-            <h4 
-            
-            >Position</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+              <h4 style={{ margin: 0 }}>Position</h4>
+              <button onClick={bringObjectToPlayer} title="Bring object to player position">📍</button> 
+            </div>
             <div className="field-group">
               <label htmlFor="position-x" 
                
