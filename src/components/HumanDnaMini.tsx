@@ -3,6 +3,7 @@
 import React, { useMemo, useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { useGLTF, TransformControls } from '@react-three/drei';
 import { Box3, Vector3, Group } from 'three';
+import { useFrame } from '@react-three/fiber';
 import type { GLTF } from 'three-stdlib';
 
 type GLTFResult = GLTF & { scene: Group };
@@ -41,6 +42,13 @@ const HumanDnaMini = forwardRef<Group, HumanDnaMiniProps>(({ mode, initialParams
     const minY = box.min.y;
     return { scale, center, minY };
   }, [scene]);
+
+  // Add subtle rotation animation
+  useFrame((_state, delta) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.1; // Adjust speed as needed
+    }
+  });
 
   return (
     <>
