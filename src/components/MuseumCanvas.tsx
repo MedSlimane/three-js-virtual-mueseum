@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import React, { Suspense, useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef, useMemo } from 'react';
 import type { Group } from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls, Stats } from '@react-three/drei';
@@ -16,10 +16,10 @@ import { SphygmomanometerMini } from './SphygmomanometerMini';
 import Controls from './Controls';
 import FirstPersonControls from './FirstPersonControls';
 import InfoPanel from './InfoPanel';
-import CoordinatesMenu from './CoordinatesMenu';
+import CoordinatesMenu, { type CoordinatesMenuProps } from './CoordinatesMenu';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
-import { ACESFilmicToneMapping, PMREMGenerator, HemisphereLight, DirectionalLight, Vector3, MathUtils } from 'three';
+import { ACESFilmicToneMapping, PMREMGenerator, HemisphereLight, DirectionalLight, Vector3, MathUtils, Color } from 'three';
 
 // Position tracker component that updates in real-time
 interface PositionTrackerProps {
@@ -86,8 +86,9 @@ const MuseumCanvas: React.FC = () => {
   const [debug, setDebug] = useState(false);
   const [controlMode, setControlMode] = useState<'orbit' | 'firstPerson'>('orbit');
   const [description, setDescription] = useState<string>('');
-  const [ambientIntensity, setAmbientIntensity] = useState(1.0); // Initial ambient intensity
-  const [directionalIntensity, setDirectionalIntensity] = useState(4.0); // Initial directional intensity
+  const [ambientIntensity, setAmbientIntensity] = useState(0.5); // Adjusted initial ambient intensity
+  const [directionalIntensity, setDirectionalIntensity] = useState(1.5); // Adjusted initial directional intensity
+  const [lightWarmth, setLightWarmth] = useState(1.0); // Add state for light warmth (0=cool, 1=neutral, 2=warm)
   const [playerPosition, setPlayerPosition] = useState<Vector3>(new Vector3(12, 8, 12)); // Initial camera position
   const operatingRoomRef = useRef<Group>(null!);
   const dnaLabRef = useRef<Group>(null!);
@@ -180,6 +181,44 @@ const MuseumCanvas: React.FC = () => {
     return () => document.removeEventListener('keydown', handleKey);
   }, [controlMode]);
 
+  // Define base colors
+  const neutralColor = useRef(new Color(0xffffff)).current;
+  const coolColor = useRef(new Color(0xccccff)).current; // Bluish white
+  const warmColor = useRef(new Color(0xffeedd)).current; // Orangish white
+  const neutralGroundColor = useRef(new Color(0x888888)).current;
+  const warmGroundColor = useRef(new Color(0x998877)).current; // Slightly warmer grey
+
+  // Calculate light colors based on warmth using useMemo
+  const finalLightColor = useMemo(() => {
+    const color = new Color();
+    if (lightWarmth <= 1.0) {
+      color.lerpColors(coolColor, neutralColor, lightWarmth);
+    } else {
+      color.lerpColors(neutralColor, warmColor, lightWarmth - 1.0);
+    }
+    return color;
+  }, [lightWarmth, coolColor, neutralColor, warmColor]);
+
+  const finalGroundColor = useMemo(() => {
+    const color = new Color();
+    color.lerpColors(neutralGroundColor, warmGroundColor, lightWarmth / 2.0);
+    return color;
+  }, [lightWarmth, neutralGroundColor, warmGroundColor]);
+
+  // Calculate sun position using useMemo
+  const sunPosition = useMemo(() => {
+    const pos = new Vector3();
+    const phi = MathUtils.degToRad(90 - 15); // 15 degrees elevation
+    const theta = MathUtils.degToRad(180); // From the back
+    pos.setFromSphericalCoords(1, phi, theta);
+    return pos;
+  }, []);
+
+  // Calculate directional light position based on sun position
+  const directionalLightPosition = useMemo(() => {
+    return sunPosition.clone().multiplyScalar(50); // Position light source far away
+  }, [sunPosition]);
+
   return (
     <React.Fragment>
       <Controls 
@@ -204,23 +243,25 @@ const MuseumCanvas: React.FC = () => {
           sphygmomanometer: sphygParams || { position: [2, 0, -2], scale: [1, 1, 1] }
         }}
         onUpdate={{
-          operatingRoom: (pos, scl) => setMiniParams({ position: pos, scale: scl }),
-          dnaLabMachine: (pos, scl) => setDnaParams({ position: pos, scale: scl }),
-          humanDna: (pos, scl) => setHumanDnaParams({ position: pos, scale: scl }),
-          hivVirus: (pos, scl) => setHivParams({ position: pos, scale: scl }),
-          laparoscopicTrocar: (pos, scl) => setTrocarParams({ position: pos, scale: scl }),
-          medicalMonitor: (pos, scl) => setMonitorParams({ position: pos, scale: scl }),
-          medicalSyringe: (pos, scl) => setSyringeParams({ position: pos, scale: scl }),
-          sciFiMri: (pos, scl) => setMriParams({ position: pos, scale: scl }),
-          sphygmomanometer: (pos, scl) => setSphygParams({ position: pos, scale: scl })
+          operatingRoom: (pos: number[], scl: number[]) => setMiniParams({ position: pos, scale: scl }),
+          dnaLabMachine: (pos: number[], scl: number[]) => setDnaParams({ position: pos, scale: scl }),
+          humanDna: (pos: number[], scl: number[]) => setHumanDnaParams({ position: pos, scale: scl }),
+          hivVirus: (pos: number[], scl: number[]) => setHivParams({ position: pos, scale: scl }),
+          laparoscopicTrocar: (pos: number[], scl: number[]) => setTrocarParams({ position: pos, scale: scl }),
+          medicalMonitor: (pos: number[], scl: number[]) => setMonitorParams({ position: pos, scale: scl }),
+          medicalSyringe: (pos: number[], scl: number[]) => setSyringeParams({ position: pos, scale: scl }),
+          sciFiMri: (pos: number[], scl: number[]) => setMriParams({ position: pos, scale: scl }),
+          sphygmomanometer: (pos: number[], scl: number[]) => setSphygParams({ position: pos, scale: scl })
         }}
         lighting={{
           ambientIntensity,
-          directionalIntensity
+          directionalIntensity,
+          lightWarmth // Pass warmth state
         }}
         onLightingUpdate={{
           setAmbientIntensity,
-          setDirectionalIntensity
+          setDirectionalIntensity,
+          setLightWarmth // Pass warmth setter
         }}
         playerPosition={playerPosition} // Pass player position
       />
@@ -232,18 +273,19 @@ const MuseumCanvas: React.FC = () => {
         onCreated={({ gl, scene }) => {
           // Renderer tone mapping and exposure
           gl.toneMapping = ACESFilmicToneMapping;
-          gl.toneMappingExposure = 0.8; // Increased exposure
+          gl.toneMappingExposure = 1.0; // Slightly increased exposure for balance
 
           // Sky dome setup
           const sky = new Sky();
           sky.scale.setScalar(450000);
-          sky.material.uniforms.turbidity.value = 10;
-          sky.material.uniforms.rayleigh.value = 2;
-          sky.material.uniforms.mieCoefficient.value = 0.005;
-          sky.material.uniforms.mieDirectionalG.value = 0.8;
+          sky.material.uniforms.turbidity.value = 8; // Slightly less turbidity
+          sky.material.uniforms.rayleigh.value = 1.5; // Adjusted Rayleigh scattering
+          sky.material.uniforms.mieCoefficient.value = 0.004; // Adjusted Mie coefficient
+          sky.material.uniforms.mieDirectionalG.value = 0.7; // Adjusted Mie directional G
           const sunPos = new Vector3();
-          const phi = MathUtils.degToRad(90 - 25);
-          const theta = MathUtils.degToRad(180);
+          // Position the sun lower in the sky for a softer look (e.g., 15 degrees elevation)
+          const phi = MathUtils.degToRad(90 - 15); 
+          const theta = MathUtils.degToRad(180); // Keep sun direction generally from the back
           sunPos.setFromSphericalCoords(1, phi, theta);
           sky.material.uniforms.sunPosition.value.copy(sunPos);
           scene.add(sky);
@@ -256,22 +298,15 @@ const MuseumCanvas: React.FC = () => {
             // apply uniform envMapIntensity to all meshes
             scene.traverse((child) => {
               if ((child as any).isMesh) {
-                (child as any).material.envMapIntensity = 0.7; // Increased environment intensity
+                // Reduce env map influence slightly for less artificial fill light
+                (child as any).material.envMapIntensity = 0.5; 
               }
             });
             hdr.dispose();
             pmrem.dispose();
           });
 
-          // Lights: Hemisphere and Sun directional
-          const hemi = new HemisphereLight(0xffffff, 0x444444, 0.1); // Increased intensity, slightly darker ground color
-          scene.add(hemi);
-          const sun = new DirectionalLight(0xffffff, 1.5); // Increased intensity
-          sun.position.set(15, 20, 10); // Adjusted position
-          sun.castShadow = true;
-          sun.shadow.mapSize.set(2048, 2048);
-          sun.shadow.normalBias = 0.005;
-          scene.add(sun);
+          // NO manual light creation here anymore
         }}
       >
         {/* Display stats when debug mode is active */}
@@ -286,16 +321,6 @@ const MuseumCanvas: React.FC = () => {
 
         {/* Proximity-based exhibit descriptions and player position tracking */}
         <ProximityAndPositionChecker />
-
-        {/* Lighting setup */}
-        <ambientLight intensity={ambientIntensity} /> {/* Use state variable */}
-        <directionalLight
-          castShadow
-          intensity={directionalIntensity} // Use state variable
-          position={[15, 20, 10]} // Adjusted position to match 'sun'
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-        />
 
         {/* Scene content with suspense fallback */}
         <Suspense fallback={<Html center>Loading…</Html>}>
@@ -427,6 +452,28 @@ const MuseumCanvas: React.FC = () => {
           
           {debug && <axesHelper args={[5]} />}
         </Suspense>
+
+        {/* Declarative Lighting Setup - Use state variables and calculated colors/positions */}
+        <hemisphereLight 
+          skyColor={finalLightColor} 
+          groundColor={finalGroundColor} 
+          intensity={ambientIntensity} // Controlled by state
+        />
+        <directionalLight
+          castShadow
+          color={finalLightColor} // Controlled by calculated color
+          intensity={directionalIntensity} // Controlled by state
+          position={directionalLightPosition} // Controlled by calculated position
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-camera-near={0.5}
+          shadow-camera-far={500}
+          shadow-camera-left={-100}
+          shadow-camera-right={100}
+          shadow-camera-top={100}
+          shadow-camera-bottom={-100}
+          shadow-normalBias={0.02}
+        />
       </Canvas>
     </React.Fragment>
   );

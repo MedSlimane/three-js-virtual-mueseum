@@ -11,10 +11,11 @@ interface ObjectParams {
 interface LightingParams {
   ambientIntensity: number;
   directionalIntensity: number;
+  lightWarmth: number; // Add light warmth
 }
 
 // Props for the CoordinatesMenu component
-interface CoordinatesMenuProps {
+export interface CoordinatesMenuProps { // Export the interface
   // All objects with their parameters
   objects: {
     operatingRoom: ObjectParams | null;
@@ -45,6 +46,7 @@ interface CoordinatesMenuProps {
   onLightingUpdate: {
     setAmbientIntensity: (intensity: number) => void;
     setDirectionalIntensity: (intensity: number) => void;
+    setLightWarmth: (warmth: number) => void; // Add warmth setter
   };
   playerPosition: Vector3; // Add playerPosition prop
 }
@@ -139,6 +141,12 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
   const handleDirectionalIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const intensity = parseFloat(e.target.value);
     onLightingUpdate.setDirectionalIntensity(intensity);
+  };
+
+  // Function to handle light warmth change
+  const handleWarmthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const warmth = parseFloat(e.target.value);
+    onLightingUpdate.setLightWarmth(warmth);
   };
 
   // Function to move the selected object to the player's position
@@ -317,9 +325,9 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
           <input
             id="ambient-intensity"
             type="range"
-            min="0"
-            max="5"
-            step="0.1"
+            min="0"  // Keep min at 0
+            max="3"  // Reduce max for finer control in typical range
+            step="0.05" // Smaller step for finer adjustments
             value={lighting.ambientIntensity}
             onChange={handleAmbientIntensityChange}
           />
@@ -330,16 +338,29 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
           <input
             id="directional-intensity"
             type="range"
-            min="0"
-            max="10"
-            step="0.1"
+            min="0"  // Keep min at 0
+            max="8"  // Reduce max for finer control in typical range
+            step="0.1" // Keep step or make slightly smaller if needed
             value={lighting.directionalIntensity}
             onChange={handleDirectionalIntensityChange}
           />
           <span>{lighting.directionalIntensity.toFixed(2)}</span>
         </div>
-      </div>
-    </div>
+        <div className="field-group">
+          <label htmlFor="light-warmth">Warmth:</label>
+          <input
+            id="light-warmth"
+            type="range"
+            min="0"   /* Cool */
+            max="2"   /* Warm */
+            step="0.05"
+            value={lighting.lightWarmth}
+            onChange={handleWarmthChange}
+          />
+          <span>{lighting.lightWarmth.toFixed(2)}</span>
+        </div> {/* Closing tag for warmth field-group */} 
+      </div> {/* Closing tag for lighting section */} 
+    </div> // Closing tag for coordinates-menu
   );
 };
 
