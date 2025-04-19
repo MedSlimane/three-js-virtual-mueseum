@@ -32,22 +32,25 @@ Users can navigate through the museum in first-person or orbit mode, manipulate 
 ## 🔧 Installation
 
 1. Clone the repository
-```bash
-git clone <repository-url>
-cd muesuem
-```
 
-2. Install dependencies
-```bash
-npm install
-```
+   ```bash
+   git clone <repository-url>
+   cd muesuem
+   ```
 
-3. Start the development server
-```bash
-npm run dev
-```
+1. Install dependencies
 
-4. Open your browser and navigate to `http://localhost:5173`
+   ```bash
+   npm install
+   ```
+
+1. Start the development server
+
+   ```bash
+   npm run dev
+   ```
+
+1. Open your browser and navigate to `http://localhost:5173`
 
 ## 🎮 Controls
 
@@ -78,7 +81,7 @@ npm run preview
 
 ## 📦 Project Structure
 
-```
+```text
 public/               # Static 3D model files (.glb)
 src/
   components/         # React components
@@ -97,6 +100,7 @@ src/
 - Interactive 3D environment with realistic lighting and shadows
 - Multiple control modes (orbit and first-person)
 - Position and scale adjustment for all models
+- Subtle rotation animation for some models (e.g., HIV Virus, Syringe)
 - Persistent model positioning using localStorage
 - Coordinate display for precise positioning
 - Debug mode with performance stats and axis helpers
