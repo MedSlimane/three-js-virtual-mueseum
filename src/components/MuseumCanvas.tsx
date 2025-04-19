@@ -86,6 +86,8 @@ const MuseumCanvas: React.FC = () => {
   const [debug, setDebug] = useState(false);
   const [controlMode, setControlMode] = useState<'orbit' | 'firstPerson'>('orbit');
   const [description, setDescription] = useState<string>('');
+  const [ambientIntensity, setAmbientIntensity] = useState(1.0); // Initial ambient intensity
+  const [directionalIntensity, setDirectionalIntensity] = useState(4.0); // Initial directional intensity
   const operatingRoomRef = useRef<Group>(null!);
   const dnaLabRef = useRef<Group>(null!);
   const humanDnaRef = useRef<Group>(null!);
@@ -208,6 +210,14 @@ const MuseumCanvas: React.FC = () => {
           sciFiMri: (pos, scl) => setMriParams({ position: pos, scale: scl }),
           sphygmomanometer: (pos, scl) => setSphygParams({ position: pos, scale: scl })
         }}
+        lighting={{
+          ambientIntensity,
+          directionalIntensity
+        }}
+        onLightingUpdate={{
+          setAmbientIntensity,
+          setDirectionalIntensity
+        }}
       />
       
       <Canvas
@@ -217,7 +227,7 @@ const MuseumCanvas: React.FC = () => {
         onCreated={({ gl, scene }) => {
           // Renderer tone mapping and exposure
           gl.toneMapping = ACESFilmicToneMapping;
-          gl.toneMappingExposure = 0.6;
+          gl.toneMappingExposure = 0.8; // Increased exposure
 
           // Sky dome setup
           const sky = new Sky();
@@ -241,7 +251,7 @@ const MuseumCanvas: React.FC = () => {
             // apply uniform envMapIntensity to all meshes
             scene.traverse((child) => {
               if ((child as any).isMesh) {
-                (child as any).material.envMapIntensity = 0.5;
+                (child as any).material.envMapIntensity = 0.7; // Increased environment intensity
               }
             });
             hdr.dispose();
@@ -249,10 +259,10 @@ const MuseumCanvas: React.FC = () => {
           });
 
           // Lights: Hemisphere and Sun directional
-          const hemi = new HemisphereLight(0xffffff, 0x222233, 0.05);
+          const hemi = new HemisphereLight(0xffffff, 0x444444, 0.1); // Increased intensity, slightly darker ground color
           scene.add(hemi);
-          const sun = new DirectionalLight(0xffffff, 1.2);
-          sun.position.set(20, 30, -10);
+          const sun = new DirectionalLight(0xffffff, 1.5); // Increased intensity
+          sun.position.set(15, 20, 10); // Adjusted position
           sun.castShadow = true;
           sun.shadow.mapSize.set(2048, 2048);
           sun.shadow.normalBias = 0.005;
@@ -273,11 +283,11 @@ const MuseumCanvas: React.FC = () => {
         <ProximityChecker />
 
         {/* Lighting setup */}
-        <ambientLight intensity={0.7} />
+        <ambientLight intensity={ambientIntensity} /> {/* Use state variable */}
         <directionalLight
           castShadow
-          intensity={3.0}
-          position={[10, 10, 5]}
+          intensity={directionalIntensity} // Use state variable
+          position={[15, 20, 10]} // Adjusted position to match 'sun'
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
         />

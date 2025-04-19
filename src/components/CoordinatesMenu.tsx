@@ -6,6 +6,12 @@ interface ObjectParams {
   scale: number[];
 }
 
+// Type definitions for lighting parameters
+interface LightingParams {
+  ambientIntensity: number;
+  directionalIntensity: number;
+}
+
 // Props for the CoordinatesMenu component
 interface CoordinatesMenuProps {
   // All objects with their parameters
@@ -32,6 +38,13 @@ interface CoordinatesMenuProps {
     sciFiMri: (position: number[], scale: number[]) => void;
     sphygmomanometer: (position: number[], scale: number[]) => void;
   };
+  // Lighting parameters
+  lighting: LightingParams;
+  // Update functions for lighting
+  onLightingUpdate: {
+    setAmbientIntensity: (intensity: number) => void;
+    setDirectionalIntensity: (intensity: number) => void;
+  };
 }
 
 // Names to display in the UI
@@ -53,7 +66,7 @@ const getStoredMenuState = (): boolean => {
   return stored ? JSON.parse(stored) : true;
 };
 
-const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) => {
+const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, lighting, onLightingUpdate }) => {
   // Use localStorage to persist menu state across mode changes
   const [isOpen, setIsOpen] = useState(getStoredMenuState());
   const [selectedObject, setSelectedObject] = useState<keyof typeof objects | null>("operatingRoom");
@@ -112,6 +125,18 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // Function to handle ambient intensity change
+  const handleAmbientIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const intensity = parseFloat(e.target.value);
+    onLightingUpdate.setAmbientIntensity(intensity);
+  };
+
+  // Function to handle directional intensity change
+  const handleDirectionalIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const intensity = parseFloat(e.target.value);
+    onLightingUpdate.setDirectionalIntensity(intensity);
   };
 
   if (!isOpen) {
@@ -270,6 +295,36 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate }) 
           </div>
         </>
       )}
+
+      <div className="coordinates-section">
+        <h4>Lighting</h4>
+        <div className="field-group">
+          <label htmlFor="ambient-intensity">Ambient:</label>
+          <input
+            id="ambient-intensity"
+            type="range"
+            min="0"
+            max="5"
+            step="0.1"
+            value={lighting.ambientIntensity}
+            onChange={handleAmbientIntensityChange}
+          />
+          <span>{lighting.ambientIntensity.toFixed(2)}</span>
+        </div>
+        <div className="field-group">
+          <label htmlFor="directional-intensity">Directional:</label>
+          <input
+            id="directional-intensity"
+            type="range"
+            min="0"
+            max="10"
+            step="0.1"
+            value={lighting.directionalIntensity}
+            onChange={handleDirectionalIntensityChange}
+          />
+          <span>{lighting.directionalIntensity.toFixed(2)}</span>
+        </div>
+      </div>
     </div>
   );
 };
