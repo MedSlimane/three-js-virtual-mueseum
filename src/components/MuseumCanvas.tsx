@@ -13,6 +13,7 @@ import { MedicalMonitorMini } from './MedicalMonitorMini';
 import { MedicalSyringeMini } from './MedicalSyringeMini';
 import { SciFiMriMini } from './SciFiMriMini';
 import { SphygmomanometerMini } from './SphygmomanometerMini';
+import Fountain from './Fountain'; // Import Fountain
 import Controls from './Controls';
 import FirstPersonControls from './FirstPersonControls';
 import InfoPanel from './InfoPanel';
@@ -43,6 +44,12 @@ const PositionTracker: React.FC<PositionTrackerProps> = ({ groupRef, setPosition
   return null;
 };
 
+// Define state types for object parameters
+interface ObjectParamsState {
+  position: [number, number, number];
+  scale: [number, number, number];
+}
+
 // Canvas setup for the virtual museum scene with interactive controls
 const MuseumCanvas: React.FC = () => {
   // Storage Keys
@@ -57,27 +64,31 @@ const MuseumCanvas: React.FC = () => {
   const sphygStorageKey = 'sphygmomanometer-mini-params';
   const playerPositionStorageKey = 'player-position';
   const lightingStorageKey = 'museum-lighting-settings'; // New key for lighting
+  const fountainStorageKey = 'fountain-params'; // Add storage key for fountain
 
   // --- Load persisted params ---
   // Load persisted params
   const saved = localStorage.getItem(storageKey);
-  const parsed = saved ? JSON.parse(saved) as { position: number[]; scale: number[] } : undefined;
+  const parsed = saved ? JSON.parse(saved) as ObjectParamsState : undefined;
   const savedDna = localStorage.getItem(dnaStorageKey);
-  const parsedDna = savedDna ? JSON.parse(savedDna) as { position: number[]; scale: number[] } : undefined;
+  const parsedDna = savedDna ? JSON.parse(savedDna) as ObjectParamsState : undefined;
   const savedHuman = localStorage.getItem(humanDnaStorageKey);
-  const parsedHuman = savedHuman ? JSON.parse(savedHuman) as { position: number[]; scale: number[] } : undefined;
+  const parsedHuman = savedHuman ? JSON.parse(savedHuman) as ObjectParamsState : undefined;
   const savedHiv = localStorage.getItem(hivStorageKey);
-  const parsedHiv = savedHiv ? JSON.parse(savedHiv) as { position: number[]; scale: number[] } : undefined;
+  const parsedHiv = savedHiv ? JSON.parse(savedHiv) as ObjectParamsState : undefined;
   const savedTrocar = localStorage.getItem(trocarStorageKey);
-  const parsedTrocar = savedTrocar ? JSON.parse(savedTrocar) as { position: number[]; scale: number[] } : undefined;
+  const parsedTrocar = savedTrocar ? JSON.parse(savedTrocar) as ObjectParamsState : undefined;
   const savedMonitor = localStorage.getItem(monitorStorageKey);
-  const parsedMonitor = savedMonitor ? JSON.parse(savedMonitor) as { position: number[]; scale: number[] } : undefined;
+  const parsedMonitor = savedMonitor ? JSON.parse(savedMonitor) as ObjectParamsState : undefined;
   const savedSyringe = localStorage.getItem(syringeStorageKey);
-  const parsedSyringe = savedSyringe ? JSON.parse(savedSyringe) as { position: number[]; scale: number[] } : undefined;
+  const parsedSyringe = savedSyringe ? JSON.parse(savedSyringe) as ObjectParamsState : undefined;
   const savedMri = localStorage.getItem(mriStorageKey);
-  const parsedMri = savedMri ? JSON.parse(savedMri) as { position: number[]; scale: number[] } : undefined;
+  const parsedMri = savedMri ? JSON.parse(savedMri) as ObjectParamsState : undefined;
   const savedSphyg = localStorage.getItem(sphygStorageKey);
-  const parsedSphyg = savedSphyg ? JSON.parse(savedSphyg) as { position: number[]; scale: number[] } : undefined;
+  const parsedSphyg = savedSphyg ? JSON.parse(savedSphyg) as ObjectParamsState : undefined;
+  const savedFountain = localStorage.getItem(fountainStorageKey); // Load fountain params
+  const parsedFountain = savedFountain ? JSON.parse(savedFountain) as ObjectParamsState : { position: [0, 0, 5], scale: [0.02, 0.02, 0.02] }; // Default fountain params if not saved
+
   const savedPlayerPos = localStorage.getItem(playerPositionStorageKey);
   const initialPlayerPosition = savedPlayerPos 
     ? new Vector3(...JSON.parse(savedPlayerPos) as [number, number, number]) 
@@ -91,15 +102,16 @@ const MuseumCanvas: React.FC = () => {
 
   // --- State Declarations ---
   const [mode, setMode] = useState<'translate' | 'scale'>('translate');
-  const [miniParams, setMiniParams] = useState(parsed);
-  const [dnaParams, setDnaParams] = useState(parsedDna);
-  const [humanDnaParams, setHumanDnaParams] = useState(parsedHuman);
-  const [hivParams, setHivParams] = useState(parsedHiv);
-  const [trocarParams, setTrocarParams] = useState(parsedTrocar);
-  const [monitorParams, setMonitorParams] = useState(parsedMonitor);
-  const [syringeParams, setSyringeParams] = useState(parsedSyringe);
-  const [mriParams, setMriParams] = useState(parsedMri);
-  const [sphygParams, setSphygParams] = useState(parsedSphyg);
+  const [miniParams, setMiniParams] = useState<ObjectParamsState | undefined>(parsed);
+  const [dnaParams, setDnaParams] = useState<ObjectParamsState | undefined>(parsedDna);
+  const [humanDnaParams, setHumanDnaParams] = useState<ObjectParamsState | undefined>(parsedHuman);
+  const [hivParams, setHivParams] = useState<ObjectParamsState | undefined>(parsedHiv);
+  const [trocarParams, setTrocarParams] = useState<ObjectParamsState | undefined>(parsedTrocar);
+  const [monitorParams, setMonitorParams] = useState<ObjectParamsState | undefined>(parsedMonitor);
+  const [syringeParams, setSyringeParams] = useState<ObjectParamsState | undefined>(parsedSyringe);
+  const [mriParams, setMriParams] = useState<ObjectParamsState | undefined>(parsedMri);
+  const [sphygParams, setSphygParams] = useState<ObjectParamsState | undefined>(parsedSphyg);
+  const [fountainParams, setFountainParams] = useState<ObjectParamsState | null>(parsedFountain ? { position: parsedFountain.position, scale: parsedFountain.scale } : { position: [0, 0, 5], scale: [0.02, 0.02, 0.02] }); // Initialize fountain state correctly
   const [debug, setDebug] = useState(false);
   const [controlMode, setControlMode] = useState<'orbit' | 'firstPerson'>('orbit');
   const previousControlModeRef = useRef(controlMode); // Ref to track previous control mode
@@ -181,6 +193,7 @@ const MuseumCanvas: React.FC = () => {
     if (syringeParams) localStorage.setItem(syringeStorageKey, JSON.stringify(syringeParams));
     if (mriParams) localStorage.setItem(mriStorageKey, JSON.stringify(mriParams));
     if (sphygParams) localStorage.setItem(sphygStorageKey, JSON.stringify(sphygParams));
+    if (fountainParams) localStorage.setItem(fountainStorageKey, JSON.stringify(fountainParams)); // Save fountain params
     
     // Save player position
     localStorage.setItem(playerPositionStorageKey, JSON.stringify(playerPosition.toArray()));
@@ -199,6 +212,7 @@ const MuseumCanvas: React.FC = () => {
     syringeParams, 
     mriParams, 
     sphygParams, 
+    fountainParams, // Add fountain params to dependencies
     playerPosition, 
     ambientIntensity, 
     directionalIntensity, 
@@ -226,6 +240,7 @@ const MuseumCanvas: React.FC = () => {
         setSyringeParams(undefined);
         setMriParams(undefined);
         setSphygParams(undefined);
+        setFountainParams({ position: [0, 0, 5], scale: [0.02, 0.02, 0.02] }); // Reset fountain to default
         setPlayerPosition(new Vector3(12, 8, 12)); // Reset player position state to default
         // Reset lighting state to defaults
         setAmbientIntensity(0.5);
@@ -243,6 +258,7 @@ const MuseumCanvas: React.FC = () => {
         localStorage.removeItem(syringeStorageKey);
         localStorage.removeItem(mriStorageKey);
         localStorage.removeItem(sphygStorageKey);
+        localStorage.removeItem(fountainStorageKey); // Remove fountain key
         localStorage.removeItem(playerPositionStorageKey); // Remove player position key
         localStorage.removeItem(lightingStorageKey); // Remove lighting key
       }
@@ -352,18 +368,20 @@ const MuseumCanvas: React.FC = () => {
           medicalMonitor: monitorParams || { position: [-2, 0, 2], scale: [1, 1, 1] },
           medicalSyringe: syringeParams || { position: [0, 0, -2], scale: [1, 1, 1] },
           sciFiMri: mriParams || { position: [-2, 0, -2], scale: [1, 1, 1] },
-          sphygmomanometer: sphygParams || { position: [2, 0, -2], scale: [1, 1, 1] }
+          sphygmomanometer: sphygParams || { position: [2, 0, -2], scale: [1, 1, 1] },
+          fountain: fountainParams, // Pass fountain state
         }}
         onUpdate={{
-          operatingRoom: (pos: number[], scl: number[]) => setMiniParams({ position: pos, scale: scl }),
-          dnaLabMachine: (pos: number[], scl: number[]) => setDnaParams({ position: pos, scale: scl }),
-          humanDna: (pos: number[], scl: number[]) => setHumanDnaParams({ position: pos, scale: scl }),
-          hivVirus: (pos: number[], scl: number[]) => setHivParams({ position: pos, scale: scl }),
-          laparoscopicTrocar: (pos: number[], scl: number[]) => setTrocarParams({ position: pos, scale: scl }),
-          medicalMonitor: (pos: number[], scl: number[]) => setMonitorParams({ position: pos, scale: scl }),
-          medicalSyringe: (pos: number[], scl: number[]) => setSyringeParams({ position: pos, scale: scl }),
-          sciFiMri: (pos: number[], scl: number[]) => setMriParams({ position: pos, scale: scl }),
-          sphygmomanometer: (pos: number[], scl: number[]) => setSphygParams({ position: pos, scale: scl })
+          operatingRoom: (pos: number[], scl: number[]) => setMiniParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          dnaLabMachine: (pos: number[], scl: number[]) => setDnaParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          humanDna: (pos: number[], scl: number[]) => setHumanDnaParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          hivVirus: (pos: number[], scl: number[]) => setHivParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          laparoscopicTrocar: (pos: number[], scl: number[]) => setTrocarParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          medicalMonitor: (pos: number[], scl: number[]) => setMonitorParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          medicalSyringe: (pos: number[], scl: number[]) => setSyringeParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          sciFiMri: (pos: number[], scl: number[]) => setMriParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          sphygmomanometer: (pos: number[], scl: number[]) => setSphygParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          fountain: (pos: number[], scl: number[]) => setFountainParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }), // Pass fountain update function
         }}
         lighting={{
           ambientIntensity,
@@ -449,7 +467,7 @@ const MuseumCanvas: React.FC = () => {
                   ? miniParams.scale as [number, number, number] 
                   : [1, 1, 1]
               } : undefined}
-              onUpdate={(pos, scl) => setMiniParams({ position: pos, scale: scl })}
+              onUpdate={(pos, scl) => setMiniParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <DnaLabMachineMini
               ref={dnaLabRef}
@@ -462,7 +480,7 @@ const MuseumCanvas: React.FC = () => {
                   ? dnaParams.scale as [number, number, number]
                   : [1, 1, 1]
               } : undefined}
-              onUpdate={(pos, scl) => setDnaParams({ position: pos, scale: scl })}
+              onUpdate={(pos, scl) => setDnaParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <HumanDnaMini
               ref={humanDnaRef}
@@ -475,7 +493,7 @@ const MuseumCanvas: React.FC = () => {
                   ? humanDnaParams.scale as [number, number, number]
                   : [1, 1, 1]
               } : undefined}
-              onUpdate={(pos, scl) => setHumanDnaParams({ position: pos, scale: scl })}
+              onUpdate={(pos, scl) => setHumanDnaParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <HivVirusSectionedMini
               ref={hivRef}
@@ -488,7 +506,7 @@ const MuseumCanvas: React.FC = () => {
                   ? hivParams.scale as [number, number, number]
                   : [1, 1, 1]
               } : undefined}
-              onUpdate={(pos, scl) => setHivParams({ position: pos, scale: scl })}
+              onUpdate={(pos, scl) => setHivParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <LaparoscopicTrocarMini
               ref={trocarRef}
@@ -501,7 +519,7 @@ const MuseumCanvas: React.FC = () => {
                   ? trocarParams.scale as [number, number, number]
                   : [1, 1, 1]
               } : undefined}
-              onUpdate={(pos, scl) => setTrocarParams({ position: pos, scale: scl })}
+              onUpdate={(pos, scl) => setTrocarParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <MedicalMonitorMini
               ref={monitorRef}
@@ -514,7 +532,7 @@ const MuseumCanvas: React.FC = () => {
                   ? monitorParams.scale as [number, number, number]
                   : [1, 1, 1]
               } : undefined}
-              onUpdate={(pos, scl) => setMonitorParams({ position: pos, scale: scl })}
+              onUpdate={(pos, scl) => setMonitorParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <MedicalSyringeMini
               ref={syringeRef}
@@ -527,7 +545,7 @@ const MuseumCanvas: React.FC = () => {
                   ? syringeParams.scale as [number, number, number]
                   : [1, 1, 1]
               } : undefined}
-              onUpdate={(pos, scl) => setSyringeParams({ position: pos, scale: scl })}
+              onUpdate={(pos, scl) => setSyringeParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <SciFiMriMini
               ref={mriRef}
@@ -540,7 +558,7 @@ const MuseumCanvas: React.FC = () => {
                   ? mriParams.scale as [number, number, number]
                   : [1, 1, 1]
               } : undefined}
-              onUpdate={(pos, scl) => setMriParams({ position: pos, scale: scl })}
+              onUpdate={(pos, scl) => setMriParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <SphygmomanometerMini
               ref={sphygRef}
@@ -553,8 +571,16 @@ const MuseumCanvas: React.FC = () => {
                   ? sphygParams.scale as [number, number, number]
                   : [1, 1, 1]
               } : undefined}
-              onUpdate={(pos, scl) => setSphygParams({ position: pos, scale: scl })}
+              onUpdate={(pos, scl) => setSphygParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
+            {/* Add Fountain component */}
+            {fountainParams && (
+              <Fountain
+                position={fountainParams.position}
+                scale={fountainParams.scale}
+                // Rotation could also be added to state if needed
+              />
+            )}
           </Museum>
           
           {controlMode === 'orbit' ? (

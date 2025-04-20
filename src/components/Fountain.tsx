@@ -18,7 +18,7 @@ interface FountainProps {
 
 export default function Fountain({ 
   position = [0, 0, 0], 
-  scale = 1, 
+  scale = 0.02, 
   rotation = [0, 0, 0] 
 }: FountainProps) {
   const group = useRef<THREE.Group>(null!); // Correct useRef initialization

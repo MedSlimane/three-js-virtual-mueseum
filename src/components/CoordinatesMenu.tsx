@@ -27,6 +27,7 @@ export interface CoordinatesMenuProps { // Export the interface
     medicalSyringe: ObjectParams | null;
     sciFiMri: ObjectParams | null;
     sphygmomanometer: ObjectParams | null;
+    fountain: ObjectParams | null; // Add fountain
   };
   // Update functions for each object
   onUpdate: {
@@ -39,6 +40,7 @@ export interface CoordinatesMenuProps { // Export the interface
     medicalSyringe: (position: number[], scale: number[]) => void;
     sciFiMri: (position: number[], scale: number[]) => void;
     sphygmomanometer: (position: number[], scale: number[]) => void;
+    fountain: (position: number[], scale: number[]) => void; // Add fountain update function
   };
   // Lighting parameters
   lighting: LightingParams;
@@ -62,7 +64,8 @@ const objectNames = {
   medicalMonitor: "Medical Monitor",
   medicalSyringe: "Medical Syringe",
   sciFiMri: "Sci-Fi MRI",
-  sphygmomanometer: "Sphygmomanometer"
+  sphygmomanometer: "Sphygmomanometer",
+  fountain: "Fountain" // Add fountain name
 };
 
 // Store menu state in localStorage to persist across mode changes
@@ -116,6 +119,21 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
     }
     
     onUpdate[selectedObject](newValues.position, newValues.scale);
+  };
+
+  // Helper function to handle input changes and update state
+  const handleInputChange = (
+    type: 'position' | 'scale',
+    axis: 0 | 1 | 2,
+    value: string // Input value is initially a string
+  ) => {
+    const numValue = parseFloat(value);
+    // Only update if the parsed value is a valid number
+    if (!isNaN(numValue)) {
+      updateValue(type, axis, numValue);
+    }
+    // Optionally, handle invalid input (e.g., clear the field or show an error)
+    // For now, it just won't update if the input is not a valid number
   };
 
   // Function to export all current object parameters to a JSON file
@@ -303,94 +321,143 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
               <button onClick={bringObjectToPlayer} title="Bring object to player position">📍</button> 
             </div>
             <div className="field-group">
-              <label htmlFor="position-x" 
-               
-              >X: {currentObject.position[0].toFixed(2)}</label>
-              <input
-                id="position-x"
-                type="range"
-                min="-10"
-                max="10"
-                step="0.1"
-                value={currentObject.position[0]}
-                onChange={(e) => updateValue('position', 0, parseFloat(e.target.value))}
-              />
+              <label htmlFor="position-x">X:</label>
+              <div className="input-pair">
+                <input
+                  id="position-x-range"
+                  type="range"
+                  min="-50"
+                  max="50"
+                  step="0.1"
+                  value={currentObject.position[0]}
+                  onChange={(e) => handleInputChange('position', 0, e.target.value)}
+                />
+                <input
+                  id="position-x-number"
+                  type="number"
+                  step="0.1"
+                  value={currentObject.position[0]}
+                  onChange={(e) => handleInputChange('position', 0, e.target.value)}
+                  className="number-input"
+                />
+              </div>
             </div>
             <div className="field-group">
-              <label htmlFor="position-y" 
-               
-              >Y: {currentObject.position[1].toFixed(2)}</label>
-              <input
-                id="position-y"
-                type="range"
-                min="-10"
-                max="10"
-                step="0.1"
-                value={currentObject.position[1]}
-                onChange={(e) => updateValue('position', 1, parseFloat(e.target.value))}
-              />
+              <label htmlFor="position-y">Y:</label>
+              <div className="input-pair">
+                <input
+                  id="position-y-range"
+                  type="range"
+                  min="-20"
+                  max="20"
+                  step="0.1"
+                  value={currentObject.position[1]}
+                  onChange={(e) => handleInputChange('position', 1, e.target.value)}
+                />
+                <input
+                  id="position-y-number"
+                  type="number"
+                  step="0.1"
+                  value={currentObject.position[1]}
+                  onChange={(e) => handleInputChange('position', 1, e.target.value)}
+                  className="number-input"
+                />
+              </div>
             </div>
             <div className="field-group">
-              <label htmlFor="position-z" 
-               
-              >Z: {currentObject.position[2].toFixed(2)}</label>
-              <input
-                id="position-z"
-                type="range"
-                min="-10"
-                max="10"
-                step="0.1"
-                value={currentObject.position[2]}
-                onChange={(e) => updateValue('position', 2, parseFloat(e.target.value))}
-              />
+              <label htmlFor="position-z">Z:</label>
+              <div className="input-pair">
+                <input
+                  id="position-z-range"
+                  type="range"
+                  min="-50"
+                  max="50"
+                  step="0.1"
+                  value={currentObject.position[2]}
+                  onChange={(e) => handleInputChange('position', 2, e.target.value)}
+                />
+                <input
+                  id="position-z-number"
+                  type="number"
+                  step="0.1"
+                  value={currentObject.position[2]}
+                  onChange={(e) => handleInputChange('position', 2, e.target.value)}
+                  className="number-input"
+                />
+              </div>
             </div>
           </div>
 
           <div className="coordinates-section">
-            <h4 
-            
-            >Scale</h4>
+            <h4>Scale</h4>
             <div className="field-group">
-              <label htmlFor="scale-x" 
-               
-              >X: {currentObject.scale[0].toFixed(2)}</label>
-              <input
-                id="scale-x"
-                type="range"
-                min="0.1"
-                max="5"
-                step="0.1"
-                value={currentObject.scale[0]}
-                onChange={(e) => updateValue('scale', 0, parseFloat(e.target.value))}
-              />
+              <label htmlFor="scale-x">X:</label>
+              <div className="input-pair">
+                <input
+                  id="scale-x-range"
+                  type="range"
+                  min="0.01"
+                  max="5"
+                  step="0.01"
+                  value={currentObject.scale[0]}
+                  onChange={(e) => handleInputChange('scale', 0, e.target.value)}
+                />
+                <input
+                  id="scale-x-number"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={currentObject.scale[0]}
+                  onChange={(e) => handleInputChange('scale', 0, e.target.value)}
+                  className="number-input"
+                />
+              </div>
             </div>
             <div className="field-group">
-              <label htmlFor="scale-y" 
-               
-              >Y: {currentObject.scale[1].toFixed(2)}</label>
-              <input
-                id="scale-y"
-                type="range"
-                min="0.1"
-                max="5"
-                step="0.1"
-                value={currentObject.scale[1]}
-                onChange={(e) => updateValue('scale', 1, parseFloat(e.target.value))}
-              />
+              <label htmlFor="scale-y">Y:</label>
+              <div className="input-pair">
+                <input
+                  id="scale-y-range"
+                  type="range"
+                  min="0.01"
+                  max="5"
+                  step="0.01"
+                  value={currentObject.scale[1]}
+                  onChange={(e) => handleInputChange('scale', 1, e.target.value)}
+                />
+                <input
+                  id="scale-y-number"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={currentObject.scale[1]}
+                  onChange={(e) => handleInputChange('scale', 1, e.target.value)}
+                  className="number-input"
+                />
+              </div>
             </div>
             <div className="field-group">
-              <label htmlFor="scale-z" 
-               
-              >Z: {currentObject.scale[2].toFixed(2)}</label>
-              <input
-                id="scale-z"
-                type="range"
-                min="0.1"
-                max="5"
-                step="0.1"
-                value={currentObject.scale[2]}
-                onChange={(e) => updateValue('scale', 2, parseFloat(e.target.value))}
-              />
+              <label htmlFor="scale-z">Z:</label>
+              <div className="input-pair">
+                <input
+                  id="scale-z-range"
+                  type="range"
+                  min="0.01"
+                  max="5"
+                  step="0.01"
+                  value={currentObject.scale[2]}
+                  onChange={(e) => handleInputChange('scale', 2, e.target.value)}
+                />
+                <input
+                  id="scale-z-number"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={currentObject.scale[2]}
+                  onChange={(e) => handleInputChange('scale', 2, e.target.value)}
+                  className="number-input"
+                />
+              </div>
             </div>
           </div>
         </>

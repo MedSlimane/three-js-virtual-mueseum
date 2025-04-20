@@ -76,12 +76,8 @@ export default function Museum({ children }: MuseumProps) {
         />
       </mesh>
 
-      {/* Add the Fountain component */}
-      {/* Position it centered on the grass plane's world coordinates */}
-      {/* The Fountain component handles its base height (y=0.02) and initial scaling internally */}
-      <Fountain position={[-18, 0, -50]} /> 
-      {/* Note: The Fountain component internally adjusts its Y position based on its bounding box min.y + 0.02 */}
-      {/* So we provide the target XZ center and let the component handle the Y offset. */}
+      {/* REMOVED static Fountain instance from here */}
+      {/* The fountain is now rendered dynamically in MuseumCanvas.tsx */}
 
       {/* Empty group acting as showroom pedestal at floor level, 2m inside entrance */}
       <group name="Showroom01_Pedestal" position={[0, 0, -2]}>  
