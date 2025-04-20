@@ -421,8 +421,6 @@ const MuseumCanvas: React.FC = () => {
 
           // NO manual light creation here anymore
         }}
-        // Update camera key to force re-creation if playerPosition changes drastically on import
-        key={playerPosition.toArray().join(',')} 
       >
         {/* Display stats when debug mode is active */}
         {debug && <Stats />}
