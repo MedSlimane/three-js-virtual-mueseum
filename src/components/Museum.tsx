@@ -3,6 +3,7 @@ import React from 'react';
 import { useGLTF, useTexture } from '@react-three/drei';
 import type { GLTF } from 'three-stdlib';
 import * as THREE from 'three';
+import Fountain from './Fountain'; // Import the Fountain component
 
 // Preload the museum model for performance
 useGLTF.preload('/the_mardou_museum.glb');
@@ -74,6 +75,13 @@ export default function Museum({ children }: MuseumProps) {
           roughness={0.25} // Apply specific roughness value as requested
         />
       </mesh>
+
+      {/* Add the Fountain component */}
+      {/* Position it centered on the grass plane's world coordinates */}
+      {/* The Fountain component handles its base height (y=0.02) and initial scaling internally */}
+      <Fountain position={[-18, 0, -50]} /> 
+      {/* Note: The Fountain component internally adjusts its Y position based on its bounding box min.y + 0.02 */}
+      {/* So we provide the target XZ center and let the component handle the Y offset. */}
 
       {/* Empty group acting as showroom pedestal at floor level, 2m inside entrance */}
       <group name="Showroom01_Pedestal" position={[0, 0, -2]}>  
