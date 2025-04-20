@@ -29,13 +29,6 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
   const direction = useRef(new Vector3());
   const prevTime = useRef(performance.now());
 
-  // Set starting camera position inside museum - at entrance looking in
-  useEffect(() => {
-    // Position camera just inside the entrance at eye level
-    camera.position.set(0, 1.6, 0);
-    camera.lookAt(0, 1.6, -2);
-  }, [camera]);
-
   // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -49,6 +49,7 @@ export interface CoordinatesMenuProps { // Export the interface
     setLightWarmth: (warmth: number) => void; // Add warmth setter
   };
   playerPosition: Vector3; // Add playerPosition prop
+  onPlayerPositionUpdate: (position: [number, number, number]) => void; // Add callback for player position update
 }
 
 // Names to display in the UI
@@ -70,7 +71,7 @@ const getStoredMenuState = (): boolean => {
   return stored ? JSON.parse(stored) : true;
 };
 
-const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, lighting, onLightingUpdate, playerPosition }) => {
+const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, lighting, onLightingUpdate, playerPosition, onPlayerPositionUpdate }) => {
   // Use localStorage to persist menu state across mode changes
   const [isOpen, setIsOpen] = useState(getStoredMenuState());
   const [selectedObject, setSelectedObject] = useState<keyof typeof objects | null>("operatingRoom");
@@ -119,7 +120,11 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
 
   // Function to export all current object parameters to a JSON file
   const exportCoordinates = () => {
-    const data = JSON.stringify(objects, null, 2);
+    const data = JSON.stringify({
+      objects,
+      lighting,
+      playerPosition: playerPosition.toArray() // Add player position to export
+    }, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -129,6 +134,79 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // Function to handle importing settings from JSON
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          const settings = JSON.parse(content);
+
+          // Validate and apply object settings
+          if (settings.objects && typeof settings.objects === 'object') {
+            Object.keys(settings.objects).forEach(key => {
+              const objectKey = key as keyof typeof onUpdate; // Type assertion
+              if (onUpdate[objectKey] && settings.objects[key]) {
+                const { position, scale } = settings.objects[key];
+                if (Array.isArray(position) && position.every((n: unknown) => typeof n === 'number') &&
+                    Array.isArray(scale) && scale.every((n: unknown) => typeof n === 'number')) {
+                  // Ensure arrays have the correct length (optional but good practice)
+                   if (position.length === 3 && scale.length === 3) {
+                      onUpdate[objectKey](position as [number, number, number], scale as [number, number, number]); // Use asserted key
+                   } else {
+                      console.warn(`Invalid array length for position/scale of object '${key}' in imported file.`);
+                   }
+                } else {
+                  console.warn(`Invalid position/scale format for object '${key}' in imported file.`);
+                }
+              }
+            });
+          } else {
+             console.warn(`Invalid or missing 'objects' data in imported file.`);
+          }
+
+          // Validate and apply lighting settings
+          if (settings.lighting && typeof settings.lighting === 'object') {
+            const { ambientIntensity, directionalIntensity, lightWarmth } = settings.lighting;
+            if (typeof ambientIntensity === 'number') {
+              onLightingUpdate.setAmbientIntensity(ambientIntensity);
+            }
+             if (typeof directionalIntensity === 'number') {
+              onLightingUpdate.setDirectionalIntensity(directionalIntensity);
+            }
+             if (typeof lightWarmth === 'number') {
+              onLightingUpdate.setLightWarmth(lightWarmth);
+            }
+          } else {
+            console.warn(`Invalid or missing 'lighting' data in imported file.`);
+          }
+
+          // Validate and apply player position settings
+          if (settings.playerPosition &&
+              Array.isArray(settings.playerPosition) &&
+              settings.playerPosition.length === 3 &&
+              settings.playerPosition.every((n: unknown) => typeof n === 'number'))
+          {
+             console.log("Importing Player Position:", settings.playerPosition);
+             onPlayerPositionUpdate(settings.playerPosition as [number, number, number]); // Call the callback
+          } else if (settings.playerPosition) {
+             console.warn(`Invalid or missing 'playerPosition' data in imported file.`);
+          }
+
+
+        } catch (error) {
+          console.error("Error parsing JSON file:", error);
+          alert("Failed to import settings. Please check the file format.");
+        }
+      };
+      reader.readAsText(file);
+      // Reset file input to allow importing the same file again
+      event.target.value = '';
+    }
   };
 
   // Function to handle ambient intensity change
@@ -360,6 +438,31 @@ const CoordinatesMenu: React.FC<CoordinatesMenuProps> = ({ objects, onUpdate, li
           <span>{lighting.lightWarmth.toFixed(2)}</span>
         </div> {/* Closing tag for warmth field-group */} 
       </div> {/* Closing tag for lighting section */} 
+
+      {/* Player Position Display */}
+      <div className="coordinates-section">
+        <h4>Player Position</h4>
+        <p>{`X: ${playerPosition.x.toFixed(2)}, Y: ${playerPosition.y.toFixed(2)}, Z: ${playerPosition.z.toFixed(2)}`}</p>
+      </div> {/* Correct closing tag */}
+
+       {/* Import/Export Buttons */}
+       <div className="coordinates-section import-export-buttons">
+          <button onClick={exportCoordinates} className="menu-button export-button">
+            Export Settings
+          </button>
+          {/* File input remains hidden */}
+          <input
+            type="file"
+            id="import-settings"
+            accept=".json"
+            onChange={handleImport}
+            style={{ display: 'none' }}
+          />
+          {/* Label acts as the visible button */}
+          <label htmlFor="import-settings" className="menu-button import-button">
+            Import Settings
+          </label>
+        </div> {/* Correct closing tag */}
     </div> // Closing tag for coordinates-menu
   );
 };

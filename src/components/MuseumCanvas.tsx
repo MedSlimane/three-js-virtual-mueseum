@@ -20,6 +20,7 @@ import CoordinatesMenu, { type CoordinatesMenuProps } from './CoordinatesMenu';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { ACESFilmicToneMapping, PMREMGenerator, HemisphereLight, DirectionalLight, Vector3, MathUtils, Color } from 'three';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'; // Import type for OrbitControls ref
 
 // Position tracker component that updates in real-time
 interface PositionTrackerProps {
@@ -44,6 +45,7 @@ const PositionTracker: React.FC<PositionTrackerProps> = ({ groupRef, setPosition
 
 // Canvas setup for the virtual museum scene with interactive controls
 const MuseumCanvas: React.FC = () => {
+  // Storage Keys
   const dnaStorageKey = 'dna-lab-machine-mini-params';
   const humanDnaStorageKey = 'human-dna-mini-params';
   const storageKey = 'museum-mini-params';
@@ -53,7 +55,10 @@ const MuseumCanvas: React.FC = () => {
   const syringeStorageKey = 'medical-syringe-mini-params';
   const mriStorageKey = 'sci-fi-mri-mini-params';
   const sphygStorageKey = 'sphygmomanometer-mini-params';
+  const playerPositionStorageKey = 'player-position';
+  const lightingStorageKey = 'museum-lighting-settings'; // New key for lighting
 
+  // --- Load persisted params ---
   // Load persisted params
   const saved = localStorage.getItem(storageKey);
   const parsed = saved ? JSON.parse(saved) as { position: number[]; scale: number[] } : undefined;
@@ -73,6 +78,18 @@ const MuseumCanvas: React.FC = () => {
   const parsedMri = savedMri ? JSON.parse(savedMri) as { position: number[]; scale: number[] } : undefined;
   const savedSphyg = localStorage.getItem(sphygStorageKey);
   const parsedSphyg = savedSphyg ? JSON.parse(savedSphyg) as { position: number[]; scale: number[] } : undefined;
+  const savedPlayerPos = localStorage.getItem(playerPositionStorageKey);
+  const initialPlayerPosition = savedPlayerPos 
+    ? new Vector3(...JSON.parse(savedPlayerPos) as [number, number, number]) 
+    : new Vector3(12, 8, 12); // Default position if not saved
+
+  // Load lighting settings
+  const savedLighting = localStorage.getItem(lightingStorageKey);
+  const initialLighting = savedLighting 
+    ? JSON.parse(savedLighting) as { ambientIntensity: number; directionalIntensity: number; lightWarmth: number } 
+    : { ambientIntensity: 0.5, directionalIntensity: 1.5, lightWarmth: 1.0 }; // Default lighting
+
+  // --- State Declarations ---
   const [mode, setMode] = useState<'translate' | 'scale'>('translate');
   const [miniParams, setMiniParams] = useState(parsed);
   const [dnaParams, setDnaParams] = useState(parsedDna);
@@ -85,11 +102,14 @@ const MuseumCanvas: React.FC = () => {
   const [sphygParams, setSphygParams] = useState(parsedSphyg);
   const [debug, setDebug] = useState(false);
   const [controlMode, setControlMode] = useState<'orbit' | 'firstPerson'>('orbit');
+  const previousControlModeRef = useRef(controlMode); // Ref to track previous control mode
+  const orbitControlsRef = useRef<OrbitControlsImpl>(null!); // Ref for OrbitControls
   const [description, setDescription] = useState<string>('');
-  const [ambientIntensity, setAmbientIntensity] = useState(0.5); // Adjusted initial ambient intensity
-  const [directionalIntensity, setDirectionalIntensity] = useState(1.5); // Adjusted initial directional intensity
-  const [lightWarmth, setLightWarmth] = useState(1.0); // Add state for light warmth (0=cool, 1=neutral, 2=warm)
-  const [playerPosition, setPlayerPosition] = useState<Vector3>(new Vector3(12, 8, 12)); // Initial camera position
+  // Initialize lighting state from loaded/default values
+  const [ambientIntensity, setAmbientIntensity] = useState(initialLighting.ambientIntensity);
+  const [directionalIntensity, setDirectionalIntensity] = useState(initialLighting.directionalIntensity);
+  const [lightWarmth, setLightWarmth] = useState(initialLighting.lightWarmth);
+  const [playerPosition, setPlayerPosition] = useState<Vector3>(initialPlayerPosition); // Initialize with loaded or default position
   const operatingRoomRef = useRef<Group>(null!);
   const dnaLabRef = useRef<Group>(null!);
   const humanDnaRef = useRef<Group>(null!);
@@ -137,7 +157,8 @@ const MuseumCanvas: React.FC = () => {
         const ref = refs[key];
         if (ref.current) {
           const dist = camera.position.distanceTo(ref.current.position);
-          if (dist < 2 && dist < minDist) {
+          // Increase proximity threshold slightly for better detection
+          if (dist < 2.5 && dist < minDist) { 
             nearest = key;
             minDist = dist;
           }
@@ -148,38 +169,119 @@ const MuseumCanvas: React.FC = () => {
     return null;
   }
 
-  // Persist last params to localStorage on unmount
+  // --- Persist state to localStorage --- 
   useEffect(() => {
-    return () => {
-      if (miniParams) localStorage.setItem(storageKey, JSON.stringify(miniParams));
-      if (dnaParams) localStorage.setItem(dnaStorageKey, JSON.stringify(dnaParams));
-      if (humanDnaParams) localStorage.setItem(humanDnaStorageKey, JSON.stringify(humanDnaParams));
-      if (hivParams) localStorage.setItem(hivStorageKey, JSON.stringify(hivParams));
-      if (trocarParams) localStorage.setItem(trocarStorageKey, JSON.stringify(trocarParams));
-      if (monitorParams) localStorage.setItem(monitorStorageKey, JSON.stringify(monitorParams));
-      if (syringeParams) localStorage.setItem(syringeStorageKey, JSON.stringify(syringeParams));
-      if (mriParams) localStorage.setItem(mriStorageKey, JSON.stringify(mriParams));
-      if (sphygParams) localStorage.setItem(sphygStorageKey, JSON.stringify(sphygParams));
-    };
-  }, [miniParams, dnaParams, humanDnaParams, hivParams, trocarParams, monitorParams, syringeParams, mriParams, sphygParams]);
+    // Save model params
+    if (miniParams) localStorage.setItem(storageKey, JSON.stringify(miniParams));
+    if (dnaParams) localStorage.setItem(dnaStorageKey, JSON.stringify(dnaParams));
+    if (humanDnaParams) localStorage.setItem(humanDnaStorageKey, JSON.stringify(humanDnaParams));
+    if (hivParams) localStorage.setItem(hivStorageKey, JSON.stringify(hivParams));
+    if (trocarParams) localStorage.setItem(trocarStorageKey, JSON.stringify(trocarParams));
+    if (monitorParams) localStorage.setItem(monitorStorageKey, JSON.stringify(monitorParams));
+    if (syringeParams) localStorage.setItem(syringeStorageKey, JSON.stringify(syringeParams));
+    if (mriParams) localStorage.setItem(mriStorageKey, JSON.stringify(mriParams));
+    if (sphygParams) localStorage.setItem(sphygStorageKey, JSON.stringify(sphygParams));
+    
+    // Save player position
+    localStorage.setItem(playerPositionStorageKey, JSON.stringify(playerPosition.toArray()));
+
+    // Save lighting settings
+    const currentLighting = { ambientIntensity, directionalIntensity, lightWarmth };
+    localStorage.setItem(lightingStorageKey, JSON.stringify(currentLighting));
+
+  }, [
+    miniParams, 
+    dnaParams, 
+    humanDnaParams, 
+    hivParams, 
+    trocarParams, 
+    monitorParams, 
+    syringeParams, 
+    mriParams, 
+    sphygParams, 
+    playerPosition, 
+    ambientIntensity, 
+    directionalIntensity, 
+    lightWarmth // Add lighting state to dependencies
+  ]);
 
   // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      // Prevent shortcuts if typing in an input/select
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) {
+        return;
+      }
+
       if (e.key === '1') setMode('translate');
       if (e.key === '2') setMode('scale');
-      if (e.key.toLowerCase() === 'r') setMiniParams(undefined);
+      if (e.key.toLowerCase() === 'r') {
+        // Reset all params - consider adding confirmation or individual resets
+        setMiniParams(undefined);
+        setDnaParams(undefined);
+        setHumanDnaParams(undefined);
+        setHivParams(undefined);
+        setTrocarParams(undefined);
+        setMonitorParams(undefined);
+        setSyringeParams(undefined);
+        setMriParams(undefined);
+        setSphygParams(undefined);
+        setPlayerPosition(new Vector3(12, 8, 12)); // Reset player position state to default
+        // Reset lighting state to defaults
+        setAmbientIntensity(0.5);
+        setDirectionalIntensity(1.5);
+        setLightWarmth(1.0);
+
+        // Optionally clear localStorage here too
+        localStorage.removeItem(storageKey);
+        localStorage.removeItem(dnaStorageKey);
+        // ... remove other keys
+        localStorage.removeItem(humanDnaStorageKey);
+        localStorage.removeItem(hivStorageKey);
+        localStorage.removeItem(trocarStorageKey);
+        localStorage.removeItem(monitorStorageKey);
+        localStorage.removeItem(syringeStorageKey);
+        localStorage.removeItem(mriStorageKey);
+        localStorage.removeItem(sphygStorageKey);
+        localStorage.removeItem(playerPositionStorageKey); // Remove player position key
+        localStorage.removeItem(lightingStorageKey); // Remove lighting key
+      }
       if (e.key.toLowerCase() === 'f') {
         // Force exit pointer lock if switching from first person to orbit mode
         if (controlMode === 'firstPerson' && document.pointerLockElement) {
           document.exitPointerLock();
         }
+        // Update previous mode ref *before* setting new mode
+        previousControlModeRef.current = controlMode; 
         setControlMode(prev => prev === 'orbit' ? 'firstPerson' : 'orbit');
       }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [controlMode]);
+  }, [controlMode]); // Depend on controlMode to re-evaluate if needed
+
+  // Effect to update OrbitControls target when switching from FirstPerson
+  useEffect(() => {
+    // Check if switching *to* orbit *from* firstPerson
+    if (controlMode === 'orbit' && previousControlModeRef.current === 'firstPerson' && orbitControlsRef.current) {
+      // Timeout to allow camera state to settle after PointerLockControls release
+      setTimeout(() => {
+        if (orbitControlsRef.current) {
+          const camera = orbitControlsRef.current.object; // Get camera from controls
+          const direction = new Vector3();
+          camera.getWorldDirection(direction);
+          // Calculate target point slightly in front of the camera
+          const target = new Vector3().copy(camera.position).add(direction.multiplyScalar(5)); // Target 5 units in front
+          
+          // Update the OrbitControls target and ensure it updates
+          orbitControlsRef.current.target.copy(target);
+          orbitControlsRef.current.update(); 
+        }
+      }, 50); // Small delay (50ms) might be needed
+    }
+    // Update the ref *after* the effect logic runs for the current render
+    // previousControlModeRef.current = controlMode; // Moved this update to the key handler for immediate reflection
+  }, [controlMode]); // Run this effect when controlMode changes
 
   // Define base colors
   const neutralColor = useRef(new Color(0xffffff)).current;
@@ -218,6 +320,16 @@ const MuseumCanvas: React.FC = () => {
   const directionalLightPosition = useMemo(() => {
     return sunPosition.clone().multiplyScalar(50); // Position light source far away
   }, [sunPosition]);
+
+  // Function to update player position from imported settings
+  const updatePlayerPositionFromImport = (newPositionArray: [number, number, number]) => {
+    setPlayerPosition(new Vector3(...newPositionArray));
+    // Optionally, force camera update if needed, though state change should trigger re-render
+    // if (orbitControlsRef.current) {
+    //   orbitControlsRef.current.object.position.set(...newPositionArray);
+    //   orbitControlsRef.current.update();
+    // }
+  };
 
   return (
     <React.Fragment>
@@ -264,11 +376,12 @@ const MuseumCanvas: React.FC = () => {
           setLightWarmth // Pass warmth setter
         }}
         playerPosition={playerPosition} // Pass player position
+        onPlayerPositionUpdate={updatePlayerPositionFromImport} // Pass the update function
       />
       
       <Canvas
         shadows
-        camera={{ position: [12, 8, 12], fov: 75 }}
+        camera={{ position: playerPosition.toArray() as [number, number, number], fov: 75 }} 
         style={{ width: '100%', height: '100%' }}
         onCreated={({ gl, scene }) => {
           // Renderer tone mapping and exposure
@@ -308,6 +421,8 @@ const MuseumCanvas: React.FC = () => {
 
           // NO manual light creation here anymore
         }}
+        // Update camera key to force re-creation if playerPosition changes drastically on import
+        key={playerPosition.toArray().join(',')} 
       >
         {/* Display stats when debug mode is active */}
         {debug && <Stats />}
@@ -445,7 +560,8 @@ const MuseumCanvas: React.FC = () => {
           </Museum>
           
           {controlMode === 'orbit' ? (
-            <OrbitControls makeDefault />
+            // Add ref to OrbitControls
+            <OrbitControls ref={orbitControlsRef} makeDefault /> 
           ) : (
             <FirstPersonControls speed={5} />
           )}
@@ -455,7 +571,7 @@ const MuseumCanvas: React.FC = () => {
 
         {/* Declarative Lighting Setup - Use state variables and calculated colors/positions */}
         <hemisphereLight 
-          skyColor={finalLightColor} 
+          color={finalLightColor} 
           groundColor={finalGroundColor} 
           intensity={ambientIntensity} // Controlled by state
         />
