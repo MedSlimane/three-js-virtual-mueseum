@@ -71,45 +71,45 @@ const MuseumCanvas: React.FC = () => {
   const uiVisibilityStorageKey = 'ui-visibility'; // Key for UI visibility state
 
   // --- Load persisted params ---
-  // Load persisted params
+  // Load persisted params, falling back to new defaults if not found
   const saved = localStorage.getItem(storageKey);
-  const parsed = saved ? JSON.parse(saved) as ObjectParamsState : undefined;
+  const parsed = saved ? JSON.parse(saved) as ObjectParamsState : { position: [0.97, -21.5, -40.7] as [number, number, number], scale: [1.3, 2, 2] as [number, number, number] };
   const savedDna = localStorage.getItem(dnaStorageKey);
-  const parsedDna = savedDna ? JSON.parse(savedDna) as ObjectParamsState : undefined;
+  const parsedDna = savedDna ? JSON.parse(savedDna) as ObjectParamsState : { position: [-39.3, -16.2, -93.23] as [number, number, number], scale: [1.09, 1.09, 1.09] as [number, number, number] };
   const savedHuman = localStorage.getItem(humanDnaStorageKey);
-  const parsedHuman = savedHuman ? JSON.parse(savedHuman) as ObjectParamsState : undefined;
+  const parsedHuman = savedHuman ? JSON.parse(savedHuman) as ObjectParamsState : { position: [-39, -15, -92.23] as [number, number, number], scale: [3.08, 3.08, 3.08] as [number, number, number] };
   const savedHiv = localStorage.getItem(hivStorageKey);
-  const parsedHiv = savedHiv ? JSON.parse(savedHiv) as ObjectParamsState : undefined;
+  const parsedHiv = savedHiv ? JSON.parse(savedHiv) as ObjectParamsState : { position: [-42.44, -14.07, -77.40] as [number, number, number], scale: [1.60, 1.60, 1.60] as [number, number, number] };
   const savedTrocar = localStorage.getItem(trocarStorageKey);
-  const parsedTrocar = savedTrocar ? JSON.parse(savedTrocar) as ObjectParamsState : undefined;
+  const parsedTrocar = savedTrocar ? JSON.parse(savedTrocar) as ObjectParamsState : { position: [-32.4, -15.07, -77.22] as [number, number, number], scale: [7.08, 7.08, 7.08] as [number, number, number] };
   const savedMonitor = localStorage.getItem(monitorStorageKey);
-  const parsedMonitor = savedMonitor ? JSON.parse(savedMonitor) as ObjectParamsState : undefined;
+  const parsedMonitor = savedMonitor ? JSON.parse(savedMonitor) as ObjectParamsState : { position: [23.3, -16.6, -89.63] as [number, number, number], scale: [0.04, 0.04, 0.04] as [number, number, number] };
   const savedSyringe = localStorage.getItem(syringeStorageKey);
-  const parsedSyringe = savedSyringe ? JSON.parse(savedSyringe) as ObjectParamsState : undefined;
+  const parsedSyringe = savedSyringe ? JSON.parse(savedSyringe) as ObjectParamsState : { position: [-40.7, -13.8, -80.25] as [number, number, number], scale: [5, 5, 5] as [number, number, number] };
   const savedMri = localStorage.getItem(mriStorageKey);
-  const parsedMri = savedMri ? JSON.parse(savedMri) as ObjectParamsState : undefined;
+  const parsedMri = savedMri ? JSON.parse(savedMri) as ObjectParamsState : { position: [-26.18, -16.1, -66.7] as [number, number, number], scale: [1.12, 1.12, 1.12] as [number, number, number] };
   const savedSphyg = localStorage.getItem(sphygStorageKey);
-  const parsedSphyg = savedSphyg ? JSON.parse(savedSphyg) as ObjectParamsState : undefined;
+  const parsedSphyg = savedSphyg ? JSON.parse(savedSphyg) as ObjectParamsState : { position: [25.47, -14.21, -98.29] as [number, number, number], scale: [1.9, 1.91, 1.9] as [number, number, number] };
   const savedFountain = localStorage.getItem(fountainStorageKey); // Load fountain params
-  const parsedFountain = savedFountain ? JSON.parse(savedFountain) as ObjectParamsState : { position: [0, 0, 5] as [number, number, number], scale: [0.02, 0.02, 0.02] as [number, number, number] };
+  const parsedFountain = savedFountain ? JSON.parse(savedFountain) as ObjectParamsState : { position: [23.3, -17.9, 2.8] as [number, number, number], scale: [0.01, 0.01, 0.01] as [number, number, number] };
   // FramedArt params from localStorage or defaults
   const storedZahrawi1 = localStorage.getItem('framed-zahrawi1-params');
-  const parsedZahrawi1 = storedZahrawi1 ? JSON.parse(storedZahrawi1) as ObjectParamsState : { position: [0, 1, -3] as [number, number, number], scale: [1, 1, 1] as [number, number, number] };
+  const parsedZahrawi1 = storedZahrawi1 ? JSON.parse(storedZahrawi1) as ObjectParamsState : { position: [-34.24, -14, -102.88] as [number, number, number], scale: [3, 3, 3] as [number, number, number] };
   const storedCheshmManuscript = localStorage.getItem('framed-cheshm-manuscript-params');
-  const parsedCheshmManuscript = storedCheshmManuscript ? JSON.parse(storedCheshmManuscript) as ObjectParamsState : { position: [2, 1, -3] as [number, number, number], scale: [1, 1, 1] as [number, number, number] };
+  const parsedCheshmManuscript = storedCheshmManuscript ? JSON.parse(storedCheshmManuscript) as ObjectParamsState : { position: [-25.4, -14, -102.88] as [number, number, number], scale: [3, 3, 3] as [number, number, number] };
   const storedMedizinKlimt = localStorage.getItem('framed-medizin-klimt-params');
-  const parsedMedizinKlimt = storedMedizinKlimt ? JSON.parse(storedMedizinKlimt) as ObjectParamsState : { position: [-2, 1, -3] as [number, number, number], scale: [1, 1, 1] as [number, number, number] };
+  const parsedMedizinKlimt = storedMedizinKlimt ? JSON.parse(storedMedizinKlimt) as ObjectParamsState : { position: [-29.23, -14, -102.88] as [number, number, number], scale: [3, 3, 3] as [number, number, number] };
 
   const savedPlayerPos = localStorage.getItem(playerPositionStorageKey);
-  const initialPlayerPosition = savedPlayerPos 
-    ? new Vector3(...JSON.parse(savedPlayerPos) as [number, number, number]) 
-    : new Vector3(12, 8, 12); // Default position if not saved
+  const initialPlayerPosition = savedPlayerPos
+    ? new Vector3(...JSON.parse(savedPlayerPos) as [number, number, number])
+    : new Vector3(-35.97, -13.35, -100.31); // Default position if not saved
 
   // Load lighting settings
   const savedLighting = localStorage.getItem(lightingStorageKey);
-  const initialLighting = savedLighting 
-    ? JSON.parse(savedLighting) as { ambientIntensity: number; directionalIntensity: number; lightWarmth: number } 
-    : { ambientIntensity: 0.5, directionalIntensity: 1.5, lightWarmth: 1.0 }; // Default lighting
+  const initialLighting = savedLighting
+    ? JSON.parse(savedLighting) as { ambientIntensity: number; directionalIntensity: number; lightWarmth: number }
+    : { ambientIntensity: 1.2, directionalIntensity: 1.5, lightWarmth: 1.0 }; // Default lighting
 
   const savedUIVisibility = localStorage.getItem(uiVisibilityStorageKey);
   const initialUIVisibility = savedUIVisibility ? JSON.parse(savedUIVisibility) as boolean : true; // Default to true
