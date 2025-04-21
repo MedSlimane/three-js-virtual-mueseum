@@ -51,6 +51,7 @@ const MedicalMonitorMini = forwardRef<Group, MedicalMonitorMiniProps>((
         name="MedicalMonitor_Miniature"
         scale={[scale, scale, scale]}
         position={[-2, 0.01, 2]}
+        rotation={[0, Math.PI, 0]} // Rotate 180 degrees around the Y-axis
       >
         <primitive object={scene} position={[-center.x, -minY, -center.z]} castShadow receiveShadow />
       </group>

@@ -163,12 +163,12 @@ const MuseumCanvas: React.FC = () => {
   // Updated imageUrls based on available files in public/pictures/
   const objectInfos: Record<string, { text: string; imageUrl?: string }> = {
     operatingRoom: {
-        text: 'Salle d\'opération : Un bloc opératoire moderne introduit au milieu du XXe siècle qui a révolutionné les soins aux patients en intégrant des techniques stériles et un éclairage avancé.'
-        // No specific image found in public/pictures/
+        text: 'Salle d\'opération : Un bloc opératoire moderne introduit au milieu du XXe siècle qui a révolutionné les soins aux patients en intégrant des techniques stériles et un éclairage avancé.',
+        imageUrl: '/pictures/oproom.png' // Added path
     },
     dnaLabMachine: {
-        text: 'Machine de laboratoire ADN : Les premiers séquenceurs d\'ADN automatisés de la fin du XXe siècle qui ont accéléré la recherche génétique et les diagnostics.'
-        // No specific image found in public/pictures/
+        text: 'Machine de laboratoire ADN : Les premiers séquenceurs d\'ADN automatisés de la fin du XXe siècle qui ont accéléré la recherche génétique et les diagnostics.',
+        imageUrl: '/pictures/dnalabmachine.png' // Added path
      },
     humanDna: { text: 'Modèle d\'ADN humain : La structure en double hélice élucidée par Watson et Crick en 1953, fondamentale pour la biologie moléculaire.' }, // No image requested
     hivVirus: {
@@ -191,52 +191,73 @@ const MuseumCanvas: React.FC = () => {
         text: 'Modèle IRM Sci-Fi : Système d\\\'imagerie conceptuel avancé illustrant l\\\'évolution de la technologie IRM depuis son introduction en 1977.',
         imageUrl: '/pictures/iRM.png' // Updated path
     },
-    sphygmomanometer: { text: 'Sphygmomanomètre : Inventé en 1896 pour mesurer la pression artérielle, fondamental pour les diagnostics cardiovasculaires modernes.' }, // No specific image found
+    sphygmomanometer: { 
+        text: 'Sphygmomanomètre : Inventé en 1896 pour mesurer la pression artérielle, fondamental pour les diagnostics cardiovasculaires modernes.',
+        imageUrl: '/pictures/sphygmomanometre.png' // Added path
+    },
     // Keep existing framed art info (text only in info panel)
-    zahrawi1: { text: 'Al-Zahrawi, père de la chirurgie moderne. Cette illustration montre certains de ses instruments chirurgicaux.' },
-    cheshmManuscript: { text: 'Manuscrit Cheshm-e-Nushkhah, un texte médical persan détaillant l\'ophtalmologie.' },
-    medizinKlimt: { text: '\"Medizin\" par Gustav Klimt, une représentation allégorique de la médecine (détruite pendant la Seconde Guerre mondiale).' }
+    zahrawi1: { 
+        text: 'Al-Zahrawi, père de la chirurgie moderne. Cette illustration montre certains de ses instruments chirurgicaux.',
+        imageUrl: '/pictures/Zahrawi1.png' // Added path
+    },
+    cheshmManuscript: { 
+        text: 'Manuscrit Cheshm-e-Nushkhah, un texte médical persan détaillant l\'ophtalmologie.',
+        imageUrl: '/pictures/Cheshm_manuscript.jpg' // Added path
+    },
+    medizinKlimt: { 
+        text: '\"Medizin\" par Gustav Klimt, une représentation allégorique de la médecine (détruite pendant la Seconde Guerre mondiale).',
+        imageUrl: '/pictures/800px-Medizin_Klimt.jpg' // Added path
+    }
   };
 
-  // Component to update description based on camera proximity and track player position
-  function ProximityAndPositionChecker() {
-    const { camera } = useThree();
-    useFrame(() => {
-      // Update player position state
-      setPlayerPosition(camera.position.clone());
+interface ProximityAndPositionCheckerProps {
+  isInfoPanelVisible: boolean;
+  toggleInfoPanel: () => void;
+}
 
-      let nearest: string | null = null;
-      let minDist = Infinity;
-      const refs: Record<string, React.RefObject<Group>> = {
-        operatingRoom: operatingRoomRef,
-        dnaLabMachine: dnaLabRef,
-        humanDna: humanDnaRef,
-        hivVirus: hivRef,
-        laparoscopicTrocar: trocarRef,
-        medicalMonitor: monitorRef,
-        medicalSyringe: syringeRef,
-        sciFiMri: mriRef,
-        sphygmomanometer: sphygRef,
-        zahrawi1: zahrawi1Ref, // Add ref
-        cheshmManuscript: cheshmManuscriptRef, // Add ref
-        medizinKlimt: medizinKlimtRef // Add ref
-      };
-      for (const key in refs) {
-        const ref = refs[key];
-        if (ref.current) {
-          const dist = camera.position.distanceTo(ref.current.position);
-          // Increase proximity threshold slightly for better detection
-          if (dist < 4.0 && dist < minDist) { // Increased threshold from 2.5 to 4.0
-            nearest = key;
-            minDist = dist;
-          }
+// Component to update description based on camera proximity and track player position
+function ProximityAndPositionChecker({ isInfoPanelVisible, toggleInfoPanel }: ProximityAndPositionCheckerProps) {
+  const { camera } = useThree();
+  useFrame(() => {
+    // Update player position state
+    setPlayerPosition(camera.position.clone());
+
+    let nearest: string | null = null;
+    let minDist = Infinity;
+    const refs: Record<string, React.RefObject<Group>> = {
+      operatingRoom: operatingRoomRef,
+      dnaLabMachine: dnaLabRef,
+      humanDna: humanDnaRef,
+      hivVirus: hivRef,
+      laparoscopicTrocar: trocarRef,
+      medicalMonitor: monitorRef,
+      medicalSyringe: syringeRef,
+      sciFiMri: mriRef,
+      sphygmomanometer: sphygRef,
+      zahrawi1: zahrawi1Ref, // Add ref
+      cheshmManuscript: cheshmManuscriptRef, // Add ref
+      medizinKlimt: medizinKlimtRef // Add ref
+    };
+    for (const key in refs) {
+      const ref = refs[key];
+      if (ref.current) {
+        const dist = camera.position.distanceTo(ref.current.position);
+        // Increase proximity threshold slightly for better detection
+        if (dist < 4.0 && dist < minDist) { // Increased threshold from 2.5 to 4.0
+          nearest = key;
+          minDist = dist;
         }
       }
-      // Set the info content based on the nearest object
-      setInfoContent(nearest ? objectInfos[nearest] : null);
-    });
-    return null;
-  }
+    }
+    // Set the info content based on the nearest object, including visibility and toggle handler
+    setInfoContent(nearest ? { 
+      ...objectInfos[nearest], 
+      isVisible: isInfoPanelVisible, 
+      onToggle: toggleInfoPanel 
+    } : null);
+  });
+  return null;
+}
 
   // --- Persist state to localStorage --- 
   useEffect(() => {
@@ -296,7 +317,7 @@ const MuseumCanvas: React.FC = () => {
     setIsInfoPanelVisible(prev => !prev);
   };
 
-  // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode, H -> toggle UI, ; -> toggle Pictures/Paintings
+  // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode, H -> toggle UI, ; -> toggle Pictures/Paintings, I -> toggle Info Panel
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       // Prevent shortcuts if typing in an input/select
@@ -353,14 +374,17 @@ const MuseumCanvas: React.FC = () => {
       if (e.key.toLowerCase() === 'h') { // Toggle UI visibility
         setIsUIVisible(prev => !prev);
       }
-      // Change key check from 'p' to ';'
       if (e.key === ';') { // Toggle Framed Art visibility
-        toggleFramedArt(); // Use the handler function
+        toggleFramedArt();
+      }
+      if (e.key.toLowerCase() === 'i') { // Toggle Info Panel visibility
+        toggleInfoPanel();
       }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [controlMode, isUIVisible, areFramedArtVisible, toggleFramedArt]); // Add dependencies
+    // Add toggleInfoPanel to dependencies
+  }, [controlMode, isUIVisible, areFramedArtVisible, toggleFramedArt, toggleInfoPanel]); // Add dependencies
 
   // Effect to update OrbitControls target when switching from FirstPerson
   useEffect(() => {
@@ -553,13 +577,16 @@ const MuseumCanvas: React.FC = () => {
         {isUIVisible && ( // Conditionally render shortcuts overlay
           <Html fullscreen className="help">
             <div className="shortcuts-overlay">
-              Shortcuts: [1] Translate | [2] Scale | [R] Reset | [F] Toggle Controls | [H] Toggle UI | [;] Toggle Pictures | [M] Toggle Menu
+              Shortcuts: [1] Translate | [2] Scale | [R] Reset | [F] Toggle Controls | [H] Toggle UI | [;] Toggle Pictures | [I] Toggle Info | [M] Toggle Menu
             </div>
           </Html>
         )}
 
         {/* Proximity-based exhibit descriptions and player position tracking */}
-        <ProximityAndPositionChecker />
+        <ProximityAndPositionChecker 
+          isInfoPanelVisible={isInfoPanelVisible} 
+          toggleInfoPanel={toggleInfoPanel} 
+        />
 
         {/* Scene content with suspense fallback */}
         <Suspense fallback={<Html center>Loading…</Html>}>
