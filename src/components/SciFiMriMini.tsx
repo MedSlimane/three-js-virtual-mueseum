@@ -11,11 +11,12 @@ useGLTF.preload('/sci-fi_mri.glb');
 
 interface SciFiMriMiniProps {
   mode: 'translate' | 'scale';
+  isUIVisible: boolean; // Add prop
   initialParams?: { position: [number, number, number]; scale: [number, number, number] };
   onUpdate: (position: number[], scale: number[]) => void;
 }
 
-const SciFiMriMini = forwardRef<Group, SciFiMriMiniProps>(({ mode, initialParams, onUpdate }, ref) => {
+const SciFiMriMini = forwardRef<Group, SciFiMriMiniProps>(({ mode, isUIVisible, initialParams, onUpdate }, ref) => {
   const { scene } = useGLTF('/sci-fi_mri.glb') as GLTFResult;
   const groupRef = useRef<Group>(null!);
   useImperativeHandle(ref, () => groupRef.current);
@@ -51,7 +52,7 @@ const SciFiMriMini = forwardRef<Group, SciFiMriMiniProps>(({ mode, initialParams
       >
         <primitive object={scene} position={[-center.x, -minY, -center.z]} castShadow receiveShadow />
       </group>
-      {ready && groupRef.current && (
+      {ready && groupRef.current && isUIVisible && ( // Conditionally render TransformControls
         <TransformControls
           object={groupRef.current}
           mode={mode}

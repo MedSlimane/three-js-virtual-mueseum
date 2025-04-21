@@ -11,12 +11,13 @@ useGLTF.preload('/medical_monitor.glb');
 
 interface MedicalMonitorMiniProps {
   mode: 'translate' | 'scale';
+  isUIVisible: boolean; // Add prop
   initialParams?: { position: [number, number, number]; scale: [number, number, number] };
   onUpdate: (position: number[], scale: number[]) => void;
 }
 
 const MedicalMonitorMini = forwardRef<Group, MedicalMonitorMiniProps>((
-  { mode, initialParams, onUpdate }, ref
+  { mode, isUIVisible, initialParams, onUpdate }, ref
 ) => {
   const { scene } = useGLTF('/medical_monitor.glb') as GLTFResult;
   const groupRef = useRef<Group>(null!);
@@ -53,7 +54,7 @@ const MedicalMonitorMini = forwardRef<Group, MedicalMonitorMiniProps>((
       >
         <primitive object={scene} position={[-center.x, -minY, -center.z]} castShadow receiveShadow />
       </group>
-      {ready && groupRef.current && (
+      {ready && groupRef.current && isUIVisible && ( // Conditionally render TransformControls
         <TransformControls
           object={groupRef.current}
           mode={mode}

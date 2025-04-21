@@ -5,13 +5,17 @@ interface ControlsProps {
   setDebug: (value: boolean) => void;
   controlMode: 'orbit' | 'firstPerson';
   setControlMode: (mode: 'orbit' | 'firstPerson') => void;
+  isUIVisible: boolean; // Add prop
+  setIsUIVisible: (value: boolean) => void; // Add prop
 }
 
 const Controls: React.FC<ControlsProps> = ({ 
   debug, 
   setDebug,
   controlMode,
-  setControlMode
+  setControlMode,
+  isUIVisible, // Destructure prop
+  setIsUIVisible // Destructure prop
 }) => {
   const handleControlModeChange = () => {
     // Force exit pointer lock if switching from first person to orbit mode
@@ -32,6 +36,10 @@ const Controls: React.FC<ControlsProps> = ({
       </button>
       <button onClick={handleControlModeChange}>
         {controlMode === 'orbit' ? 'First Person Mode' : 'Orbit Mode'}
+      </button>
+      {/* Add UI Toggle Button */}
+      <button onClick={() => setIsUIVisible(!isUIVisible)}>
+        {isUIVisible ? 'Hide UI (H)' : 'Show UI (H)'}
       </button>
     </div>
   );

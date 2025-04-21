@@ -11,11 +11,12 @@ useGLTF.preload('/sphygmomanometer.glb');
 
 interface SphygmomanometerMiniProps {
   mode: 'translate' | 'scale';
+  isUIVisible: boolean;
   initialParams?: { position: [number, number, number]; scale: [number, number, number] };
   onUpdate: (position: number[], scale: number[]) => void;
 }
 
-const SphygmomanometerMini = forwardRef<Group, SphygmomanometerMiniProps>(({ mode, initialParams, onUpdate }, ref) => {
+const SphygmomanometerMini = forwardRef<Group, SphygmomanometerMiniProps>(({ mode, isUIVisible, initialParams, onUpdate }, ref) => {
   const { scene } = useGLTF('/sphygmomanometer.glb') as GLTFResult;
   const groupRef = useRef<Group>(null!);
   useImperativeHandle(ref, () => groupRef.current);
@@ -51,7 +52,7 @@ const SphygmomanometerMini = forwardRef<Group, SphygmomanometerMiniProps>(({ mod
       >
         <primitive object={scene} position={[-center.x, -minY, -center.z]} castShadow receiveShadow />
       </group>
-      {ready && groupRef.current && (
+      {ready && groupRef.current && isUIVisible && (
         <TransformControls
           object={groupRef.current}
           mode={mode}

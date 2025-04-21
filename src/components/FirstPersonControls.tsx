@@ -7,10 +7,16 @@ import { PointerLockControls, Html } from '@react-three/drei';
 interface FirstPersonControlsProps {
   speed?: number;
   lookSpeed?: number;
+  isUIVisible: boolean; // Add prop
+  initialPosition: Vector3; // Add prop for initial position
+  onPositionChange: (position: Vector3) => void; // Add prop for position updates
 }
 
 const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({ 
-  speed = 5 
+  speed = 5, 
+  isUIVisible, // Destructure prop
+  initialPosition, // Destructure prop
+  onPositionChange // Destructure prop
 }) => {
   const { camera, gl } = useThree();
   const controlsRef = useRef<any>(null);
@@ -28,6 +34,11 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
   
   const direction = useRef(new Vector3());
   const prevTime = useRef(performance.now());
+
+  // Set initial camera position
+  useEffect(() => {
+    camera.position.copy(initialPosition);
+  }, [camera, initialPosition]);
 
   // Handle keyboard input
   useEffect(() => {
@@ -166,6 +177,8 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
       }
       
       prevTime.current = time;
+      // Report position change
+      onPositionChange(camera.position.clone());
     }
   });
 
@@ -203,18 +216,20 @@ const FirstPersonControls: React.FC<FirstPersonControlsProps> = ({
         }}
       />
       
-      {/* Camera Mode Toggle Button - always visible */}
-      <Html fullscreen>
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent event from bubbling up
-            isLocked ? controlsRef.current?.unlock() : controlsRef.current?.lock();
-          }}
-          style={buttonStyle}
-        >
-          {isLocked ? 'Exit Camera Mode (L)' : 'Enter Camera Mode (L)'}
-        </button>
-      </Html>
+      {/* Camera Mode Toggle Button - conditionally rendered */}
+      {isUIVisible && (
+        <Html fullscreen>
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent event from bubbling up
+              isLocked ? controlsRef.current?.unlock() : controlsRef.current?.lock();
+            }}
+            style={buttonStyle}
+          >
+            {isLocked ? 'Exit Camera Mode (L)' : 'Enter Camera Mode (L)'}
+          </button>
+        </Html>
+      )}
     </>
   );
 };

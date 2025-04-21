@@ -11,11 +11,12 @@ useGLTF.preload('/dna_lab_machine.glb');
 
 interface DnaLabMachineMiniProps {
   mode: 'translate' | 'scale';
+  isUIVisible: boolean; // Add prop
   initialParams?: { position: [number, number, number]; scale: [number, number, number] };
   onUpdate: (position: number[], scale: number[]) => void;
 }
 
-const DnaLabMachineMini = forwardRef<Group, DnaLabMachineMiniProps>(({ mode, initialParams, onUpdate }, ref) => {
+const DnaLabMachineMini = forwardRef<Group, DnaLabMachineMiniProps>(({ mode, isUIVisible, initialParams, onUpdate }, ref) => {
   const { scene } = useGLTF('/dna_lab_machine.glb') as GLTFResult;
   const groupRef = useRef<Group>(null!);
   useImperativeHandle(ref, () => groupRef.current);
@@ -57,7 +58,7 @@ const DnaLabMachineMini = forwardRef<Group, DnaLabMachineMiniProps>(({ mode, ini
         />
       </group>
 
-      {groupReady && groupRef.current && (
+      {groupReady && groupRef.current && isUIVisible && ( // Conditionally render TransformControls
         <TransformControls
           object={groupRef.current}
           mode={mode}

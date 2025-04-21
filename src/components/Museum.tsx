@@ -76,7 +76,7 @@ export default function Museum({ children }: MuseumProps) {
         />
       </mesh>
 
-      {/* REMOVED static Fountain instance from here */}
+       {/* REMOVED static Fountain instance from here */}
       {/* The fountain is now rendered dynamically in MuseumCanvas.tsx */}
 
       {/* Empty group acting as showroom pedestal at floor level, 2m inside entrance */}

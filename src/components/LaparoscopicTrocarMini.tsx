@@ -11,11 +11,12 @@ useGLTF.preload('/laparoscopic_trocar.glb');
 
 interface LaparoscopicTrocarMiniProps {
   mode: 'translate' | 'scale';
+  isUIVisible: boolean;
   initialParams?: { position: [number, number, number]; scale: [number, number, number] };
   onUpdate: (position: number[], scale: number[]) => void;
 }
 
-const LaparoscopicTrocarMini = forwardRef<Group, LaparoscopicTrocarMiniProps>(({ mode, initialParams, onUpdate }, ref) => {
+const LaparoscopicTrocarMini = forwardRef<Group, LaparoscopicTrocarMiniProps>(({ mode, isUIVisible, initialParams, onUpdate }, ref) => {
   const { scene } = useGLTF('/laparoscopic_trocar.glb') as GLTFResult;
   const groupRef = useRef<Group>(null!);
   useImperativeHandle(ref, () => groupRef.current);
@@ -51,7 +52,7 @@ const LaparoscopicTrocarMini = forwardRef<Group, LaparoscopicTrocarMiniProps>(({
       >
         <primitive object={scene} position={[-center.x, -minY, -center.z]} castShadow receiveShadow />
       </group>
-      {ready && groupRef.current && (
+      {ready && groupRef.current && isUIVisible && (
         <TransformControls
           object={groupRef.current}
           mode={mode}

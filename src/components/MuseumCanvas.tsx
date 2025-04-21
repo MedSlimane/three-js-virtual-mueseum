@@ -68,6 +68,7 @@ const MuseumCanvas: React.FC = () => {
   const playerPositionStorageKey = 'player-position';
   const lightingStorageKey = 'museum-lighting-settings'; // New key for lighting
   const fountainStorageKey = 'fountain-params'; // Add storage key for fountain
+  const uiVisibilityStorageKey = 'ui-visibility'; // Key for UI visibility state
 
   // --- Load persisted params ---
   // Load persisted params
@@ -110,6 +111,9 @@ const MuseumCanvas: React.FC = () => {
     ? JSON.parse(savedLighting) as { ambientIntensity: number; directionalIntensity: number; lightWarmth: number } 
     : { ambientIntensity: 0.5, directionalIntensity: 1.5, lightWarmth: 1.0 }; // Default lighting
 
+  const savedUIVisibility = localStorage.getItem(uiVisibilityStorageKey);
+  const initialUIVisibility = savedUIVisibility ? JSON.parse(savedUIVisibility) as boolean : true; // Default to true
+
   // --- State Declarations ---
   const [mode, setMode] = useState<'translate' | 'scale'>('translate');
   const [miniParams, setMiniParams] = useState<ObjectParamsState | undefined>(parsed);
@@ -135,6 +139,7 @@ const MuseumCanvas: React.FC = () => {
   const [directionalIntensity, setDirectionalIntensity] = useState(initialLighting.directionalIntensity);
   const [lightWarmth, setLightWarmth] = useState(initialLighting.lightWarmth);
   const [playerPosition, setPlayerPosition] = useState<Vector3>(initialPlayerPosition); // Initialize with loaded or default position
+  const [isUIVisible, setIsUIVisible] = useState<boolean>(initialUIVisibility); // UI Visibility state
   const operatingRoomRef = useRef<Group>(null!);
   const dnaLabRef = useRef<Group>(null!);
   const humanDnaRef = useRef<Group>(null!);
@@ -218,6 +223,9 @@ const MuseumCanvas: React.FC = () => {
     const currentLighting = { ambientIntensity, directionalIntensity, lightWarmth };
     localStorage.setItem(lightingStorageKey, JSON.stringify(currentLighting));
 
+    // Save UI visibility state
+    localStorage.setItem(uiVisibilityStorageKey, JSON.stringify(isUIVisible));
+
   }, [
     miniParams, 
     dnaParams, 
@@ -235,14 +243,15 @@ const MuseumCanvas: React.FC = () => {
     playerPosition, 
     ambientIntensity, 
     directionalIntensity, 
-    lightWarmth
+    lightWarmth,
+    isUIVisible // Add isUIVisible to dependency array
   ]);
 
-  // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode
+  // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode, H -> toggle UI
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       // Prevent shortcuts if typing in an input/select
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
@@ -280,6 +289,8 @@ const MuseumCanvas: React.FC = () => {
         localStorage.removeItem(fountainStorageKey); // Remove fountain key
         localStorage.removeItem(playerPositionStorageKey); // Remove player position key
         localStorage.removeItem(lightingStorageKey); // Remove lighting key
+        localStorage.removeItem(uiVisibilityStorageKey); // Remove UI visibility key
+        setIsUIVisible(true); // Reset UI visibility state
       }
       if (e.key.toLowerCase() === 'f') {
         // Force exit pointer lock if switching from first person to orbit mode
@@ -290,10 +301,13 @@ const MuseumCanvas: React.FC = () => {
         previousControlModeRef.current = controlMode; 
         setControlMode(prev => prev === 'orbit' ? 'firstPerson' : 'orbit');
       }
+      if (e.key.toLowerCase() === 'h') { // Toggle UI visibility
+        setIsUIVisible(prev => !prev);
+      }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [controlMode]); // Depend on controlMode to re-evaluate if needed
+  }, [controlMode, isUIVisible]); // Add isUIVisible dependency
 
   // Effect to update OrbitControls target when switching from FirstPerson
   useEffect(() => {
@@ -368,60 +382,68 @@ const MuseumCanvas: React.FC = () => {
 
   return (
     <React.Fragment>
-      <Controls 
-        debug={debug} 
-        setDebug={setDebug} 
-        controlMode={controlMode} 
-        setControlMode={setControlMode} 
-      />
-      
-      <InfoPanel text={description || 'Approach an exhibit to learn more.'} />
-      
-      <CoordinatesMenu
-        objects={{
-          operatingRoom: miniParams || { position: [0, 0, 0], scale: [1, 1, 1] },
-          dnaLabMachine: dnaParams || { position: [0, 0, 2], scale: [1, 1, 1] },
-          humanDna: humanDnaParams || { position: [2, 0, 0], scale: [1, 1, 1] },
-          hivVirus: hivParams || { position: [-2, 0, 0], scale: [1, 1, 1] },
-          laparoscopicTrocar: trocarParams || { position: [2, 0, 2], scale: [1, 1, 1] },
-          medicalMonitor: monitorParams || { position: [-2, 0, 2], scale: [1, 1, 1] },
-          medicalSyringe: syringeParams || { position: [0, 0, -2], scale: [1, 1, 1] },
-          sciFiMri: mriParams || { position: [-2, 0, -2], scale: [1, 1, 1] },
-          sphygmomanometer: sphygParams || { position: [2, 0, -2], scale: [1, 1, 1] },
-          fountain: fountainParams,
-          zahrawi1: zahrawi1Params,
-          cheshmManuscript: cheshmManuscriptParams,
-          medizinKlimt: medizinKlimtParams
-        }}
-        onUpdate={{
-          operatingRoom: (pos: number[], scl: number[]) => setMiniParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          dnaLabMachine: (pos: number[], scl: number[]) => setDnaParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          humanDna: (pos: number[], scl: number[]) => setHumanDnaParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          hivVirus: (pos: number[], scl: number[]) => setHivParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          laparoscopicTrocar: (pos: number[], scl: number[]) => setTrocarParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          medicalMonitor: (pos: number[], scl: number[]) => setMonitorParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          medicalSyringe: (pos: number[], scl: number[]) => setSyringeParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          sciFiMri: (pos: number[], scl: number[]) => setMriParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          sphygmomanometer: (pos: number[], scl: number[]) => setSphygParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          fountain: (pos: number[], scl: number[]) => setFountainParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          zahrawi1: (pos: number[], scl: number[]) => setZahrawi1Params({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          cheshmManuscript: (pos: number[], scl: number[]) => setCheshmManuscriptParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          medizinKlimt: (pos: number[], scl: number[]) => setMedizinKlimtParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })
-        }}
-        lighting={{
-          ambientIntensity,
-          directionalIntensity,
-          lightWarmth
-        }}
-        onLightingUpdate={{
-          setAmbientIntensity,
-          setDirectionalIntensity,
-          setLightWarmth
-        }}
-        playerPosition={playerPosition}
-        onPlayerPositionUpdate={updatePlayerPositionFromImport}
-      />
-      
+      {isUIVisible && ( // Conditionally render Controls
+        <Controls
+          debug={debug}
+          setDebug={setDebug}
+          controlMode={controlMode}
+          setControlMode={setControlMode}
+          isUIVisible={isUIVisible} // Pass state
+          setIsUIVisible={setIsUIVisible} // Pass setter
+        />
+      )}
+
+      {isUIVisible && ( // Conditionally render InfoPanel
+        <InfoPanel text={description || 'Approach an exhibit to learn more.'} />
+      )}
+
+      {isUIVisible && ( // Conditionally render CoordinatesMenu
+        <CoordinatesMenu
+          objects={{
+            operatingRoom: miniParams || { position: [0, 0, 0], scale: [1, 1, 1] },
+            dnaLabMachine: dnaParams || { position: [0, 0, 2], scale: [1, 1, 1] },
+            humanDna: humanDnaParams || { position: [2, 0, 0], scale: [1, 1, 1] },
+            hivVirus: hivParams || { position: [-2, 0, 0], scale: [1, 1, 1] },
+            laparoscopicTrocar: trocarParams || { position: [2, 0, 2], scale: [1, 1, 1] },
+            medicalMonitor: monitorParams || { position: [-2, 0, 2], scale: [1, 1, 1] },
+            medicalSyringe: syringeParams || { position: [0, 0, -2], scale: [1, 1, 1] },
+            sciFiMri: mriParams || { position: [-2, 0, -2], scale: [1, 1, 1] },
+            sphygmomanometer: sphygParams || { position: [2, 0, -2], scale: [1, 1, 1] },
+            fountain: fountainParams,
+            zahrawi1: zahrawi1Params,
+            cheshmManuscript: cheshmManuscriptParams,
+            medizinKlimt: medizinKlimtParams
+          }}
+          onUpdate={{
+            operatingRoom: (pos: number[], scl: number[]) => setMiniParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            dnaLabMachine: (pos: number[], scl: number[]) => setDnaParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            humanDna: (pos: number[], scl: number[]) => setHumanDnaParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            hivVirus: (pos: number[], scl: number[]) => setHivParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            laparoscopicTrocar: (pos: number[], scl: number[]) => setTrocarParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            medicalMonitor: (pos: number[], scl: number[]) => setMonitorParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            medicalSyringe: (pos: number[], scl: number[]) => setSyringeParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            sciFiMri: (pos: number[], scl: number[]) => setMriParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            sphygmomanometer: (pos: number[], scl: number[]) => setSphygParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            fountain: (pos: number[], scl: number[]) => setFountainParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            zahrawi1: (pos: number[], scl: number[]) => setZahrawi1Params({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            cheshmManuscript: (pos: number[], scl: number[]) => setCheshmManuscriptParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+            medizinKlimt: (pos: number[], scl: number[]) => setMedizinKlimtParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })
+          }}
+          lighting={{
+            ambientIntensity,
+            directionalIntensity,
+            lightWarmth
+          }}
+          onLightingUpdate={{
+            setAmbientIntensity,
+            setDirectionalIntensity,
+            setLightWarmth
+          }}
+          playerPosition={playerPosition}
+          onPlayerPositionUpdate={updatePlayerPositionFromImport}
+        />
+      )}
+
       <Canvas
         shadows
         camera={{ position: playerPosition.toArray() as [number, number, number], fov: 75 }} 
@@ -467,13 +489,15 @@ const MuseumCanvas: React.FC = () => {
       >
         {/* Display stats when debug mode is active */}
         {debug && <Stats />}
-        
+
         {/* Overlay showing current shortcuts */}
-        <Html fullscreen className="help">
-          <div className="shortcuts-overlay">
-            Shortcuts: [1] Translate | [2] Scale | [R] Reset | [F] Toggle Controls | [M] Toggle Menu
-          </div>
-        </Html>
+        {isUIVisible && ( // Conditionally render shortcuts overlay
+          <Html fullscreen className="help">
+            <div className="shortcuts-overlay">
+              Shortcuts: [1] Translate | [2] Scale | [R] Reset | [F] Toggle Controls | [H] Toggle UI | [M] Toggle Menu
+            </div>
+          </Html>
+        )}
 
         {/* Proximity-based exhibit descriptions and player position tracking */}
         <ProximityAndPositionChecker />
@@ -484,6 +508,7 @@ const MuseumCanvas: React.FC = () => {
             <OperatingRoomMini
               ref={operatingRoomRef}
               mode={mode}
+              isUIVisible={isUIVisible} // Pass state
               initialParams={miniParams ? {
                 position: Array.isArray(miniParams.position) && miniParams.position.length === 3 
                   ? miniParams.position as [number, number, number] 
@@ -497,6 +522,7 @@ const MuseumCanvas: React.FC = () => {
             <DnaLabMachineMini
               ref={dnaLabRef}
               mode={mode}
+              isUIVisible={isUIVisible} // Pass state
               initialParams={dnaParams ? {
                 position: Array.isArray(dnaParams.position) && dnaParams.position.length === 3
                   ? dnaParams.position as [number, number, number]
@@ -510,6 +536,7 @@ const MuseumCanvas: React.FC = () => {
             <HumanDnaMini
               ref={humanDnaRef}
               mode={mode}
+              isUIVisible={isUIVisible} // Pass state
               initialParams={humanDnaParams ? {
                 position: Array.isArray(humanDnaParams.position) && humanDnaParams.position.length === 3
                   ? humanDnaParams.position as [number, number, number]
@@ -523,6 +550,7 @@ const MuseumCanvas: React.FC = () => {
             <HivVirusSectionedMini
               ref={hivRef}
               mode={mode}
+              isUIVisible={isUIVisible} // Pass state
               initialParams={hivParams ? {
                 position: Array.isArray(hivParams.position) && hivParams.position.length === 3
                   ? hivParams.position as [number, number, number]
@@ -536,6 +564,7 @@ const MuseumCanvas: React.FC = () => {
             <LaparoscopicTrocarMini
               ref={trocarRef}
               mode={mode}
+              isUIVisible={isUIVisible} // Pass state
               initialParams={trocarParams ? {
                 position: Array.isArray(trocarParams.position) && trocarParams.position.length === 3
                   ? trocarParams.position as [number, number, number]
@@ -549,6 +578,7 @@ const MuseumCanvas: React.FC = () => {
             <MedicalMonitorMini
               ref={monitorRef}
               mode={mode}
+              isUIVisible={isUIVisible} // Pass state
               initialParams={monitorParams ? {
                 position: Array.isArray(monitorParams.position) && monitorParams.position.length === 3
                   ? monitorParams.position as [number, number, number]
@@ -562,6 +592,7 @@ const MuseumCanvas: React.FC = () => {
             <MedicalSyringeMini
               ref={syringeRef}
               mode={mode}
+              isUIVisible={isUIVisible} // Pass state
               initialParams={syringeParams ? {
                 position: Array.isArray(syringeParams.position) && syringeParams.position.length === 3
                   ? syringeParams.position as [number, number, number]
@@ -575,6 +606,7 @@ const MuseumCanvas: React.FC = () => {
             <SciFiMriMini
               ref={mriRef}
               mode={mode}
+              isUIVisible={isUIVisible} // Pass state
               initialParams={mriParams ? {
                 position: Array.isArray(mriParams.position) && mriParams.position.length === 3
                   ? mriParams.position as [number, number, number]
@@ -588,6 +620,7 @@ const MuseumCanvas: React.FC = () => {
             <SphygmomanometerMini
               ref={sphygRef}
               mode={mode}
+              isUIVisible={isUIVisible} // Pass state
               initialParams={sphygParams ? {
                 position: Array.isArray(sphygParams.position) && sphygParams.position.length === 3
                   ? sphygParams.position as [number, number, number]
@@ -601,21 +634,43 @@ const MuseumCanvas: React.FC = () => {
             {/* Add Fountain component */}
             {fountainParams && (
               <Fountain
-                position={fountainParams.position}
-                scale={fountainParams.scale}
+                mode={mode}
+                isUIVisible={isUIVisible} // Pass state
+                initialParams={fountainParams}
+                onUpdate={(pos, scl) => setFountainParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
               />
             )}
             {/* FramedArt exhibits */}
-            <FramedArt_Zahrawi1 position={zahrawi1Params.position} scale={zahrawi1Params.scale} />
-            <FramedArt_CheshmManuscript position={cheshmManuscriptParams.position} scale={cheshmManuscriptParams.scale} />
-            <FramedArt_800pxMedizinKlimt position={medizinKlimtParams.position} scale={medizinKlimtParams.scale} />
+            <FramedArt_Zahrawi1
+              mode={mode}
+              isUIVisible={isUIVisible} // Pass state
+              initialParams={zahrawi1Params}
+              onUpdate={(pos, scl) => setZahrawi1Params({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
+            />
+            <FramedArt_CheshmManuscript
+              mode={mode}
+              isUIVisible={isUIVisible} // Pass state
+              initialParams={cheshmManuscriptParams}
+              onUpdate={(pos, scl) => setCheshmManuscriptParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
+            />
+            <FramedArt_800pxMedizinKlimt
+              mode={mode}
+              isUIVisible={isUIVisible} // Pass state
+              initialParams={medizinKlimtParams}
+              onUpdate={(pos, scl) => setMedizinKlimtParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
+            />
           </Museum>
           
           {controlMode === 'orbit' ? (
             // Add ref to OrbitControls
             <OrbitControls ref={orbitControlsRef} makeDefault /> 
           ) : (
-            <FirstPersonControls speed={5} />
+            <FirstPersonControls
+              speed={5}
+              isUIVisible={isUIVisible}
+              initialPosition={playerPosition}
+              onPositionChange={(pos: Vector3) => setPlayerPosition(pos)}
+            />
           )}
           
           {debug && <axesHelper args={[5]} />}

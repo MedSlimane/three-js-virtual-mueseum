@@ -12,11 +12,12 @@ useGLTF.preload('/medical_syringe_-_jeringa_medica_videogame_free.glb');
 
 interface MedicalSyringeMiniProps {
   mode: 'translate' | 'scale';
+  isUIVisible: boolean; // Add prop
   initialParams?: { position: [number, number, number]; scale: [number, number, number] };
   onUpdate: (position: number[], scale: number[]) => void;
 }
 
-const MedicalSyringeMini = forwardRef<Group, MedicalSyringeMiniProps>(({ mode, initialParams, onUpdate }, ref) => {
+const MedicalSyringeMini = forwardRef<Group, MedicalSyringeMiniProps>(({ mode, isUIVisible, initialParams, onUpdate }, ref) => {
   const { scene } = useGLTF('/medical_syringe_-_jeringa_medica_videogame_free.glb') as GLTFResult;
   const groupRef = useRef<Group>(null!);
   useImperativeHandle(ref, () => groupRef.current);
@@ -59,7 +60,7 @@ const MedicalSyringeMini = forwardRef<Group, MedicalSyringeMiniProps>(({ mode, i
       >
         <primitive object={scene} position={[-center.x, -minY, -center.z]} castShadow receiveShadow />
       </group>
-      {ready && groupRef.current && (
+      {ready && groupRef.current && isUIVisible && ( // Conditionally render TransformControls
         <TransformControls
           object={groupRef.current}
           mode={mode}

@@ -13,11 +13,12 @@ useGLTF.preload('/human_dna.glb');
 
 interface HumanDnaMiniProps {
   mode: 'translate' | 'scale';
+  isUIVisible: boolean; // Add prop
   initialParams?: { position: [number, number, number]; scale: [number, number, number] };
   onUpdate: (position: number[], scale: number[]) => void;
 }
 
-const HumanDnaMini = forwardRef<Group, HumanDnaMiniProps>(({ mode, initialParams, onUpdate }, ref) => {
+const HumanDnaMini = forwardRef<Group, HumanDnaMiniProps>(({ mode, isUIVisible, initialParams, onUpdate }, ref) => {
   const { scene } = useGLTF('/human_dna.glb') as GLTFResult;
   const groupRef = useRef<Group>(null!);
   useImperativeHandle(ref, () => groupRef.current);
@@ -60,7 +61,7 @@ const HumanDnaMini = forwardRef<Group, HumanDnaMiniProps>(({ mode, initialParams
       >
         <primitive object={scene} position={[-center.x, -minY, -center.z]} castShadow receiveShadow />
       </group>
-      {ready && groupRef.current && (
+      {ready && groupRef.current && isUIVisible && ( // Conditionally render TransformControls
         <TransformControls
           object={groupRef.current}
           mode={mode}
