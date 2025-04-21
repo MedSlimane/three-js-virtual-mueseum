@@ -170,7 +170,10 @@ const MuseumCanvas: React.FC = () => {
         text: 'Machine de laboratoire ADN : Les premiers séquenceurs d\'ADN automatisés de la fin du XXe siècle qui ont accéléré la recherche génétique et les diagnostics.',
         imageUrl: '/pictures/dnalabmachine.png' // Added path
      },
-    humanDna: { text: 'Modèle d\'ADN humain : La structure en double hélice élucidée par Watson et Crick en 1953, fondamentale pour la biologie moléculaire.' }, // No image requested
+    humanDna: {
+      text: 'Modèle d\'ADN humain : La structure en double hélice élucidée par Watson et Crick en 1953, fondamentale pour la biologie moléculaire.',
+      imageUrl: '/pictures/humandna.png' // Updated path
+     }, // No image requested
     hivVirus: {
         text: 'Modèle du virus VIH : Représente le virus responsable du SIDA, identifié pour la première fois au début des années 1980, conduisant à des avancées dans la thérapie antivirale.',
         imageUrl: '/pictures/hivvirus.png' // Updated path
@@ -188,8 +191,8 @@ const MuseumCanvas: React.FC = () => {
         imageUrl: '/pictures/medical syringe.png' // Updated path
     },
     sciFiMri: {
-        text: 'Modèle IRM Sci-Fi : Système d\\\'imagerie conceptuel avancé illustrant l\\\'évolution de la technologie IRM depuis son introduction en 1977.',
-        imageUrl: '/pictures/iRM.png' // Updated path
+      text: 'Modèle IRM : Système d\'imagerie par résonance magnétique utilisé en médecine depuis 1977 pour visualiser les tissus internes du corps humain.',
+      imageUrl: '/pictures/iRM.png' // Updated path
     },
     sphygmomanometer: { 
         text: 'Sphygmomanomètre : Inventé en 1896 pour mesurer la pression artérielle, fondamental pour les diagnostics cardiovasculaires modernes.',
@@ -201,11 +204,11 @@ const MuseumCanvas: React.FC = () => {
         imageUrl: '/pictures/Zahrawi1.png' // Added path
     },
     cheshmManuscript: { 
-        text: 'Manuscrit Cheshm-e-Nushkhah, un texte médical persan détaillant l\'ophtalmologie.',
+        text: 'Un manuscrit sur l\\\'anatomie de l\\\'œil par Hunayn ibn Ishaq, tiré de son livre, Questions sur l\\\'œil, conservé à la Bibliothèque nationale du Caire et daté d\\\'environ 1200 après JC.',
         imageUrl: '/pictures/Cheshm_manuscript.jpg' // Added path
     },
     medizinKlimt: { 
-        text: '\"Medizin\" par Gustav Klimt, une représentation allégorique de la médecine (détruite pendant la Seconde Guerre mondiale).',
+        text: 'Les Peintures des Facultés, Fakultätsbilder en allemand, réalisées par Gustav Klimt et destinées à orner le plafond du grand hall de l\\\'Université de Vienne sont un ensemble de trois œuvres monumentales réalisées par l\\\'artiste autrichien entre 1894 et 1907. Sous forme d\\\'allégories, ces toiles représentent La Philosophie, La Médecine et La Jurisprudence.',
         imageUrl: '/pictures/800px-Medizin_Klimt.jpg' // Added path
     }
   };
