@@ -22,6 +22,9 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { ACESFilmicToneMapping, PMREMGenerator, HemisphereLight, DirectionalLight, Vector3, MathUtils, Color } from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'; // Import type for OrbitControls ref
+import { FramedArt_Zahrawi1 } from './FramedArt/FramedArt_Zahrawi1';
+import { FramedArt_CheshmManuscript } from './FramedArt/FramedArt_CheshmManuscript';
+import { FramedArt_800pxMedizinKlimt } from './FramedArt/FramedArt_800pxMedizinKlimt'; // Direct import
 
 // Position tracker component that updates in real-time
 interface PositionTrackerProps {
@@ -87,7 +90,14 @@ const MuseumCanvas: React.FC = () => {
   const savedSphyg = localStorage.getItem(sphygStorageKey);
   const parsedSphyg = savedSphyg ? JSON.parse(savedSphyg) as ObjectParamsState : undefined;
   const savedFountain = localStorage.getItem(fountainStorageKey); // Load fountain params
-  const parsedFountain = savedFountain ? JSON.parse(savedFountain) as ObjectParamsState : { position: [0, 0, 5], scale: [0.02, 0.02, 0.02] }; // Default fountain params if not saved
+  const parsedFountain = savedFountain ? JSON.parse(savedFountain) as ObjectParamsState : { position: [0, 0, 5] as [number, number, number], scale: [0.02, 0.02, 0.02] as [number, number, number] };
+  // FramedArt params from localStorage or defaults
+  const storedZahrawi1 = localStorage.getItem('framed-zahrawi1-params');
+  const parsedZahrawi1 = storedZahrawi1 ? JSON.parse(storedZahrawi1) as ObjectParamsState : { position: [0, 1, -3] as [number, number, number], scale: [1, 1, 1] as [number, number, number] };
+  const storedCheshmManuscript = localStorage.getItem('framed-cheshm-manuscript-params');
+  const parsedCheshmManuscript = storedCheshmManuscript ? JSON.parse(storedCheshmManuscript) as ObjectParamsState : { position: [2, 1, -3] as [number, number, number], scale: [1, 1, 1] as [number, number, number] };
+  const storedMedizinKlimt = localStorage.getItem('framed-medizin-klimt-params');
+  const parsedMedizinKlimt = storedMedizinKlimt ? JSON.parse(storedMedizinKlimt) as ObjectParamsState : { position: [-2, 1, -3] as [number, number, number], scale: [1, 1, 1] as [number, number, number] };
 
   const savedPlayerPos = localStorage.getItem(playerPositionStorageKey);
   const initialPlayerPosition = savedPlayerPos 
@@ -111,7 +121,10 @@ const MuseumCanvas: React.FC = () => {
   const [syringeParams, setSyringeParams] = useState<ObjectParamsState | undefined>(parsedSyringe);
   const [mriParams, setMriParams] = useState<ObjectParamsState | undefined>(parsedMri);
   const [sphygParams, setSphygParams] = useState<ObjectParamsState | undefined>(parsedSphyg);
-  const [fountainParams, setFountainParams] = useState<ObjectParamsState | null>(parsedFountain ? { position: parsedFountain.position, scale: parsedFountain.scale } : { position: [0, 0, 5], scale: [0.02, 0.02, 0.02] }); // Initialize fountain state correctly
+  const [fountainParams, setFountainParams] = useState<ObjectParamsState | null>(parsedFountain);
+  const [zahrawi1Params, setZahrawi1Params] = useState<ObjectParamsState>(parsedZahrawi1);
+  const [cheshmManuscriptParams, setCheshmManuscriptParams] = useState<ObjectParamsState>(parsedCheshmManuscript);
+  const [medizinKlimtParams, setMedizinKlimtParams] = useState<ObjectParamsState>(parsedMedizinKlimt);
   const [debug, setDebug] = useState(false);
   const [controlMode, setControlMode] = useState<'orbit' | 'firstPerson'>('orbit');
   const previousControlModeRef = useRef(controlMode); // Ref to track previous control mode
@@ -193,7 +206,10 @@ const MuseumCanvas: React.FC = () => {
     if (syringeParams) localStorage.setItem(syringeStorageKey, JSON.stringify(syringeParams));
     if (mriParams) localStorage.setItem(mriStorageKey, JSON.stringify(mriParams));
     if (sphygParams) localStorage.setItem(sphygStorageKey, JSON.stringify(sphygParams));
-    if (fountainParams) localStorage.setItem(fountainStorageKey, JSON.stringify(fountainParams)); // Save fountain params
+    if (fountainParams) localStorage.setItem(fountainStorageKey, JSON.stringify(fountainParams));
+    if (zahrawi1Params) localStorage.setItem('framed-zahrawi1-params', JSON.stringify(zahrawi1Params));
+    if (cheshmManuscriptParams) localStorage.setItem('framed-cheshm-manuscript-params', JSON.stringify(cheshmManuscriptParams));
+    if (medizinKlimtParams) localStorage.setItem('framed-medizin-klimt-params', JSON.stringify(medizinKlimtParams));
     
     // Save player position
     localStorage.setItem(playerPositionStorageKey, JSON.stringify(playerPosition.toArray()));
@@ -212,11 +228,14 @@ const MuseumCanvas: React.FC = () => {
     syringeParams, 
     mriParams, 
     sphygParams, 
-    fountainParams, // Add fountain params to dependencies
+    fountainParams, 
+    zahrawi1Params, 
+    cheshmManuscriptParams, 
+    medizinKlimtParams,
     playerPosition, 
     ambientIntensity, 
     directionalIntensity, 
-    lightWarmth // Add lighting state to dependencies
+    lightWarmth
   ]);
 
   // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode
@@ -369,7 +388,10 @@ const MuseumCanvas: React.FC = () => {
           medicalSyringe: syringeParams || { position: [0, 0, -2], scale: [1, 1, 1] },
           sciFiMri: mriParams || { position: [-2, 0, -2], scale: [1, 1, 1] },
           sphygmomanometer: sphygParams || { position: [2, 0, -2], scale: [1, 1, 1] },
-          fountain: fountainParams, // Pass fountain state
+          fountain: fountainParams,
+          zahrawi1: zahrawi1Params,
+          cheshmManuscript: cheshmManuscriptParams,
+          medizinKlimt: medizinKlimtParams
         }}
         onUpdate={{
           operatingRoom: (pos: number[], scl: number[]) => setMiniParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
@@ -381,20 +403,23 @@ const MuseumCanvas: React.FC = () => {
           medicalSyringe: (pos: number[], scl: number[]) => setSyringeParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
           sciFiMri: (pos: number[], scl: number[]) => setMriParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
           sphygmomanometer: (pos: number[], scl: number[]) => setSphygParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
-          fountain: (pos: number[], scl: number[]) => setFountainParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }), // Pass fountain update function
+          fountain: (pos: number[], scl: number[]) => setFountainParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          zahrawi1: (pos: number[], scl: number[]) => setZahrawi1Params({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          cheshmManuscript: (pos: number[], scl: number[]) => setCheshmManuscriptParams({ position: pos as [number, number, number], scale: scl as [number, number, number] }),
+          medizinKlimt: (pos: number[], scl: number[]) => setMedizinKlimtParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })
         }}
         lighting={{
           ambientIntensity,
           directionalIntensity,
-          lightWarmth // Pass warmth state
+          lightWarmth
         }}
         onLightingUpdate={{
           setAmbientIntensity,
           setDirectionalIntensity,
-          setLightWarmth // Pass warmth setter
+          setLightWarmth
         }}
-        playerPosition={playerPosition} // Pass player position
-        onPlayerPositionUpdate={updatePlayerPositionFromImport} // Pass the update function
+        playerPosition={playerPosition}
+        onPlayerPositionUpdate={updatePlayerPositionFromImport}
       />
       
       <Canvas
@@ -578,9 +603,12 @@ const MuseumCanvas: React.FC = () => {
               <Fountain
                 position={fountainParams.position}
                 scale={fountainParams.scale}
-                // Rotation could also be added to state if needed
               />
             )}
+            {/* FramedArt exhibits */}
+            <FramedArt_Zahrawi1 position={zahrawi1Params.position} scale={zahrawi1Params.scale} />
+            <FramedArt_CheshmManuscript position={cheshmManuscriptParams.position} scale={cheshmManuscriptParams.scale} />
+            <FramedArt_800pxMedizinKlimt position={medizinKlimtParams.position} scale={medizinKlimtParams.scale} />
           </Museum>
           
           {controlMode === 'orbit' ? (

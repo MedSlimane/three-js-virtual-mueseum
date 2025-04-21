@@ -27,7 +27,10 @@ export interface CoordinatesMenuProps { // Export the interface
     medicalSyringe: ObjectParams | null;
     sciFiMri: ObjectParams | null;
     sphygmomanometer: ObjectParams | null;
-    fountain: ObjectParams | null; // Add fountain
+    fountain: ObjectParams | null;
+    zahrawi1: ObjectParams | null;
+    cheshmManuscript: ObjectParams | null;
+    medizinKlimt: ObjectParams | null;
   };
   // Update functions for each object
   onUpdate: {
@@ -40,7 +43,10 @@ export interface CoordinatesMenuProps { // Export the interface
     medicalSyringe: (position: number[], scale: number[]) => void;
     sciFiMri: (position: number[], scale: number[]) => void;
     sphygmomanometer: (position: number[], scale: number[]) => void;
-    fountain: (position: number[], scale: number[]) => void; // Add fountain update function
+    fountain: (position: number[], scale: number[]) => void;
+    zahrawi1: (position: number[], scale: number[]) => void;
+    cheshmManuscript: (position: number[], scale: number[]) => void;
+    medizinKlimt: (position: number[], scale: number[]) => void;
   };
   // Lighting parameters
   lighting: LightingParams;
@@ -65,7 +71,10 @@ const objectNames = {
   medicalSyringe: "Medical Syringe",
   sciFiMri: "Sci-Fi MRI",
   sphygmomanometer: "Sphygmomanometer",
-  fountain: "Fountain" // Add fountain name
+  fountain: "Fountain",
+  zahrawi1: "Zahrawi 1",
+  cheshmManuscript: "Cheshm Manuscript",
+  medizinKlimt: "Medizin Klimt"
 };
 
 // Store menu state in localStorage to persist across mode changes
