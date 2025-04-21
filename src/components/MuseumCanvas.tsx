@@ -16,7 +16,7 @@ import { SphygmomanometerMini } from './SphygmomanometerMini';
 import Fountain from './Fountain'; // Import Fountain
 import Controls from './Controls';
 import FirstPersonControls from './FirstPersonControls';
-import InfoPanel from './InfoPanel';
+import InfoPanel, { type InfoPanelProps } from './InfoPanel'; // Import type
 import CoordinatesMenu, { type CoordinatesMenuProps } from './CoordinatesMenu';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
@@ -149,18 +149,42 @@ const MuseumCanvas: React.FC = () => {
   const syringeRef = useRef<Group>(null!);
   const mriRef = useRef<Group>(null!);
   const sphygRef = useRef<Group>(null!);
+  // Refs for Framed Art
+  const zahrawi1Ref = useRef<Group>(null!);
+  const cheshmManuscriptRef = useRef<Group>(null!);
+  const medizinKlimtRef = useRef<Group>(null!);
 
-  // Mapping exhibits to descriptive texts
-  const objectInfos: Record<string,string> = {
-    operatingRoom: 'Operating Room: A modern surgical theater introduced in the mid-20th century that revolutionized patient care by integrating sterile techniques and advanced lighting.',
-    dnaLabMachine: 'DNA Lab Machine: Early automated DNA sequencers from the late 20th century that accelerated genetic research and diagnostics.',
-    humanDna: 'Human DNA Model: The double helix structure elucidated by Watson and Crick in 1953, foundational to molecular biology.',
-    hivVirus: 'HIV Virus Model: Depicts the virus responsible for AIDS, first identified in the early 1980s, leading to breakthroughs in antiviral therapy.',
-    laparoscopicTrocar: 'Laparoscopic Trocar: Introduced in the 1970s, enabling minimally invasive procedures and transforming surgical practices.',
-    medicalMonitor: 'Medical Monitor: Real-time patient monitoring devices that became widespread in the 1960s, improving critical care and surgical outcomes.',
-    medicalSyringe: 'Medical Syringe: A standard tool since the 1850s, refined for precision drug delivery and sterilization in modern medicine.',
-    sciFiMri: 'Sci-Fi MRI Model: Conceptual advanced imaging system showcasing MRI technology’s evolution since its introduction in 1977.',
-    sphygmomanometer: 'Sphygmomanometer: Invented in 1896 for measuring blood pressure, fundamental to modern cardiovascular diagnostics.'
+  // State for the info panel content (text and optional image URL)
+  const [infoContent, setInfoContent] = useState<InfoPanelProps | null>(null);
+
+  // Mapping exhibits to descriptive texts and image URLs (French)
+  // Added imageUrl where available
+  const objectInfos: Record<string, { text: string; imageUrl?: string }> = {
+    operatingRoom: {
+        text: 'Salle d\'opération : Un bloc opératoire moderne introduit au milieu du XXe siècle qui a révolutionné les soins aux patients en intégrant des techniques stériles et un éclairage avancé.',
+        imageUrl: '/pictures/operating_room.jpg' // Added image path
+    },
+    dnaLabMachine: {
+        text: 'Machine de laboratoire ADN : Les premiers séquenceurs d\'ADN automatisés de la fin du XXe siècle qui ont accéléré la recherche génétique et les diagnostics.',
+        imageUrl: '/pictures/dna_lab_machine.png' // Added image path
+     },
+    humanDna: {
+        text: 'Modèle d\'ADN humain : La structure en double hélice élucidée par Watson et Crick en 1953, fondamentale pour la biologie moléculaire.',
+        imageUrl: '/pictures/human_dna.webp' // Added image path
+    },
+    hivVirus: {
+        text: 'Modèle du virus VIH : Représente le virus responsable du SIDA, identifié pour la première fois au début des années 1980, conduisant à des avancées dans la thérapie antivirale.',
+        imageUrl: '/pictures/hiv_virus.jpg' // Placeholder image path
+    },
+    laparoscopicTrocar: { text: 'Trocart laparoscopique : Introduit dans les années 1970, permettant des procédures minimalement invasives et transformant les pratiques chirurgicales.' },
+    medicalMonitor: { text: 'Moniteur médical : Dispositifs de surveillance des patients en temps réel devenus courants dans les années 1960, améliorant les soins intensifs et les résultats chirurgicaux.' },
+    medicalSyringe: { text: 'Seringue médicale : Un outil standard depuis les années 1850, perfectionné pour l\'administration précise de médicaments et la stérilisation en médecine moderne.' },
+    sciFiMri: { text: 'Modèle IRM Sci-Fi : Système d\\\'imagerie conceptuel avancé illustrant l\\\'évolution de la technologie IRM depuis son introduction en 1977.' },
+    sphygmomanometer: { text: 'Sphygmomanomètre : Inventé en 1896 pour mesurer la pression artérielle, fondamental pour les diagnostics cardiovasculaires modernes.' },
+    // Keep existing framed art info with images
+    zahrawi1: { text: 'Al-Zahrawi, père de la chirurgie moderne. Cette illustration montre certains de ses instruments chirurgicaux.', imageUrl: '/pictures/Zahrawi1.png' },
+    cheshmManuscript: { text: 'Manuscrit Cheshm-e-Nushkhah, un texte médical persan détaillant l\'ophtalmologie.', imageUrl: '/pictures/Cheshm_manuscript.jpg' },
+    medizinKlimt: { text: '\"Medizin\" par Gustav Klimt, une représentation allégorique de la médecine (détruite pendant la Seconde Guerre mondiale).', imageUrl: '/pictures/800px-Medizin_Klimt.jpg' }
   };
 
   // Component to update description based on camera proximity and track player position
@@ -181,20 +205,24 @@ const MuseumCanvas: React.FC = () => {
         medicalMonitor: monitorRef,
         medicalSyringe: syringeRef,
         sciFiMri: mriRef,
-        sphygmomanometer: sphygRef
+        sphygmomanometer: sphygRef,
+        zahrawi1: zahrawi1Ref, // Add ref
+        cheshmManuscript: cheshmManuscriptRef, // Add ref
+        medizinKlimt: medizinKlimtRef // Add ref
       };
       for (const key in refs) {
         const ref = refs[key];
         if (ref.current) {
           const dist = camera.position.distanceTo(ref.current.position);
           // Increase proximity threshold slightly for better detection
-          if (dist < 2.5 && dist < minDist) { 
+          if (dist < 4.0 && dist < minDist) { // Increased threshold from 2.5 to 4.0
             nearest = key;
             minDist = dist;
           }
         }
       }
-      setDescription(nearest ? objectInfos[nearest] : '');
+      // Set the info content based on the nearest object
+      setInfoContent(nearest ? objectInfos[nearest] : null);
     });
     return null;
   }
@@ -393,9 +421,11 @@ const MuseumCanvas: React.FC = () => {
         />
       )}
 
-      {isUIVisible && ( // Conditionally render InfoPanel
-        <InfoPanel text={description || 'Approach an exhibit to learn more.'} />
-      )}
+      {/* Render InfoPanel unconditionally, passing text and optional imageUrl */}
+      <InfoPanel 
+        text={infoContent?.text || 'Approach an exhibit to learn more.'} 
+        imageUrl={infoContent?.imageUrl}
+      />
 
       {isUIVisible && ( // Conditionally render CoordinatesMenu
         <CoordinatesMenu
@@ -642,18 +672,21 @@ const MuseumCanvas: React.FC = () => {
             )}
             {/* FramedArt exhibits */}
             <FramedArt_Zahrawi1
+              ref={zahrawi1Ref} // Assign ref
               mode={mode}
               isUIVisible={isUIVisible} // Pass state
               initialParams={zahrawi1Params}
               onUpdate={(pos, scl) => setZahrawi1Params({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <FramedArt_CheshmManuscript
+              ref={cheshmManuscriptRef} // Assign ref
               mode={mode}
               isUIVisible={isUIVisible} // Pass state
               initialParams={cheshmManuscriptParams}
               onUpdate={(pos, scl) => setCheshmManuscriptParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
             />
             <FramedArt_800pxMedizinKlimt
+              ref={medizinKlimtRef} // Assign ref
               mode={mode}
               isUIVisible={isUIVisible} // Pass state
               initialParams={medizinKlimtParams}
