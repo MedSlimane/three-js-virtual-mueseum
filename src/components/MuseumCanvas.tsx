@@ -140,6 +140,8 @@ const MuseumCanvas: React.FC = () => {
   const [lightWarmth, setLightWarmth] = useState(initialLighting.lightWarmth);
   const [playerPosition, setPlayerPosition] = useState<Vector3>(initialPlayerPosition); // Initialize with loaded or default position
   const [isUIVisible, setIsUIVisible] = useState<boolean>(initialUIVisibility); // UI Visibility state
+  const [areFramedArtVisible, setAreFramedArtVisible] = useState<boolean>(true); // State for framed art visibility
+  const [isInfoPanelVisible, setIsInfoPanelVisible] = useState<boolean>(true); // State for InfoPanel visibility
   const operatingRoomRef = useRef<Group>(null!);
   const dnaLabRef = useRef<Group>(null!);
   const humanDnaRef = useRef<Group>(null!);
@@ -158,33 +160,42 @@ const MuseumCanvas: React.FC = () => {
   const [infoContent, setInfoContent] = useState<InfoPanelProps | null>(null);
 
   // Mapping exhibits to descriptive texts and image URLs (French)
-  // Added imageUrl where available
+  // Updated imageUrls based on available files in public/pictures/
   const objectInfos: Record<string, { text: string; imageUrl?: string }> = {
     operatingRoom: {
-        text: 'Salle d\'opération : Un bloc opératoire moderne introduit au milieu du XXe siècle qui a révolutionné les soins aux patients en intégrant des techniques stériles et un éclairage avancé.',
-        imageUrl: '/pictures/operating_room.jpg' // Added image path
+        text: 'Salle d\'opération : Un bloc opératoire moderne introduit au milieu du XXe siècle qui a révolutionné les soins aux patients en intégrant des techniques stériles et un éclairage avancé.'
+        // No specific image found in public/pictures/
     },
     dnaLabMachine: {
-        text: 'Machine de laboratoire ADN : Les premiers séquenceurs d\'ADN automatisés de la fin du XXe siècle qui ont accéléré la recherche génétique et les diagnostics.',
-        imageUrl: '/pictures/dna_lab_machine.png' // Added image path
+        text: 'Machine de laboratoire ADN : Les premiers séquenceurs d\'ADN automatisés de la fin du XXe siècle qui ont accéléré la recherche génétique et les diagnostics.'
+        // No specific image found in public/pictures/
      },
-    humanDna: {
-        text: 'Modèle d\'ADN humain : La structure en double hélice élucidée par Watson et Crick en 1953, fondamentale pour la biologie moléculaire.',
-        imageUrl: '/pictures/human_dna.webp' // Added image path
-    },
+    humanDna: { text: 'Modèle d\'ADN humain : La structure en double hélice élucidée par Watson et Crick en 1953, fondamentale pour la biologie moléculaire.' }, // No image requested
     hivVirus: {
         text: 'Modèle du virus VIH : Représente le virus responsable du SIDA, identifié pour la première fois au début des années 1980, conduisant à des avancées dans la thérapie antivirale.',
-        imageUrl: '/pictures/hiv_virus.jpg' // Placeholder image path
+        imageUrl: '/pictures/hivvirus.png' // Updated path
     },
-    laparoscopicTrocar: { text: 'Trocart laparoscopique : Introduit dans les années 1970, permettant des procédures minimalement invasives et transformant les pratiques chirurgicales.' },
-    medicalMonitor: { text: 'Moniteur médical : Dispositifs de surveillance des patients en temps réel devenus courants dans les années 1960, améliorant les soins intensifs et les résultats chirurgicaux.' },
-    medicalSyringe: { text: 'Seringue médicale : Un outil standard depuis les années 1850, perfectionné pour l\'administration précise de médicaments et la stérilisation en médecine moderne.' },
-    sciFiMri: { text: 'Modèle IRM Sci-Fi : Système d\\\'imagerie conceptuel avancé illustrant l\\\'évolution de la technologie IRM depuis son introduction en 1977.' },
-    sphygmomanometer: { text: 'Sphygmomanomètre : Inventé en 1896 pour mesurer la pression artérielle, fondamental pour les diagnostics cardiovasculaires modernes.' },
-    // Keep existing framed art info with images
-    zahrawi1: { text: 'Al-Zahrawi, père de la chirurgie moderne. Cette illustration montre certains de ses instruments chirurgicaux.', imageUrl: '/pictures/Zahrawi1.png' },
-    cheshmManuscript: { text: 'Manuscrit Cheshm-e-Nushkhah, un texte médical persan détaillant l\'ophtalmologie.', imageUrl: '/pictures/Cheshm_manuscript.jpg' },
-    medizinKlimt: { text: '\"Medizin\" par Gustav Klimt, une représentation allégorique de la médecine (détruite pendant la Seconde Guerre mondiale).', imageUrl: '/pictures/800px-Medizin_Klimt.jpg' }
+    laparoscopicTrocar: {
+        text: 'Trocart laparoscopique : Introduit dans les années 1970, permettant des procédures minimalement invasives et transformant les pratiques chirurgicales.',
+        imageUrl: '/pictures/laproscopic.png' // Updated path
+    },
+    medicalMonitor: {
+        text: 'Moniteur médical : Dispositifs de surveillance des patients en temps réel devenus courants dans les années 1960, améliorant les soins intensifs et les résultats chirurgicaux.',
+        imageUrl: '/pictures/medicalmonitor.png' // Updated path
+    },
+    medicalSyringe: {
+        text: 'Seringue médicale : Un outil standard depuis les années 1850, perfectionné pour l\'administration précise de médicaments et la stérilisation en médecine moderne.',
+        imageUrl: '/pictures/medical syringe.png' // Updated path
+    },
+    sciFiMri: {
+        text: 'Modèle IRM Sci-Fi : Système d\\\'imagerie conceptuel avancé illustrant l\\\'évolution de la technologie IRM depuis son introduction en 1977.',
+        imageUrl: '/pictures/iRM.png' // Updated path
+    },
+    sphygmomanometer: { text: 'Sphygmomanomètre : Inventé en 1896 pour mesurer la pression artérielle, fondamental pour les diagnostics cardiovasculaires modernes.' }, // No specific image found
+    // Keep existing framed art info (text only in info panel)
+    zahrawi1: { text: 'Al-Zahrawi, père de la chirurgie moderne. Cette illustration montre certains de ses instruments chirurgicaux.' },
+    cheshmManuscript: { text: 'Manuscrit Cheshm-e-Nushkhah, un texte médical persan détaillant l\'ophtalmologie.' },
+    medizinKlimt: { text: '\"Medizin\" par Gustav Klimt, une représentation allégorique de la médecine (détruite pendant la Seconde Guerre mondiale).' }
   };
 
   // Component to update description based on camera proximity and track player position
@@ -275,7 +286,17 @@ const MuseumCanvas: React.FC = () => {
     isUIVisible // Add isUIVisible to dependency array
   ]);
 
-  // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode, H -> toggle UI
+  // Function to toggle framed art visibility
+  const toggleFramedArt = () => {
+    setAreFramedArtVisible(prev => !prev);
+  };
+
+  // Function to toggle InfoPanel visibility
+  const toggleInfoPanel = () => {
+    setIsInfoPanelVisible(prev => !prev);
+  };
+
+  // Keyboard shortcuts: 1 → translate, 2 → scale, R → reset, F → toggle control mode, H -> toggle UI, ; -> toggle Pictures/Paintings
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       // Prevent shortcuts if typing in an input/select
@@ -332,10 +353,14 @@ const MuseumCanvas: React.FC = () => {
       if (e.key.toLowerCase() === 'h') { // Toggle UI visibility
         setIsUIVisible(prev => !prev);
       }
+      // Change key check from 'p' to ';'
+      if (e.key === ';') { // Toggle Framed Art visibility
+        toggleFramedArt(); // Use the handler function
+      }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [controlMode, isUIVisible]); // Add isUIVisible dependency
+  }, [controlMode, isUIVisible, areFramedArtVisible, toggleFramedArt]); // Add dependencies
 
   // Effect to update OrbitControls target when switching from FirstPerson
   useEffect(() => {
@@ -418,13 +443,17 @@ const MuseumCanvas: React.FC = () => {
           setControlMode={setControlMode}
           isUIVisible={isUIVisible} // Pass state
           setIsUIVisible={setIsUIVisible} // Pass setter
+          areFramedArtVisible={areFramedArtVisible} // Pass state
+          toggleFramedArt={toggleFramedArt} // Pass handler function
         />
       )}
 
-      {/* Render InfoPanel unconditionally, passing text and optional imageUrl */}
+      {/* Render InfoPanel, passing state and toggle handler */}
       <InfoPanel 
         text={infoContent?.text || 'Approach an exhibit to learn more.'} 
         imageUrl={infoContent?.imageUrl}
+        isVisible={isInfoPanelVisible} // Pass visibility state
+        onToggle={toggleInfoPanel} // Pass toggle handler
       />
 
       {isUIVisible && ( // Conditionally render CoordinatesMenu
@@ -520,11 +549,11 @@ const MuseumCanvas: React.FC = () => {
         {/* Display stats when debug mode is active */}
         {debug && <Stats />}
 
-        {/* Overlay showing current shortcuts */}
+        {/* Overlay showing current shortcuts - Update description */}
         {isUIVisible && ( // Conditionally render shortcuts overlay
           <Html fullscreen className="help">
             <div className="shortcuts-overlay">
-              Shortcuts: [1] Translate | [2] Scale | [R] Reset | [F] Toggle Controls | [H] Toggle UI | [M] Toggle Menu
+              Shortcuts: [1] Translate | [2] Scale | [R] Reset | [F] Toggle Controls | [H] Toggle UI | [;] Toggle Pictures | [M] Toggle Menu
             </div>
           </Html>
         )}
@@ -544,7 +573,7 @@ const MuseumCanvas: React.FC = () => {
                   ? miniParams.position as [number, number, number] 
                   : [0, 0, 0],
                 scale: Array.isArray(miniParams.scale) && miniParams.scale.length === 3 
-                  ? miniParams.scale as [number, number, number] 
+                  ? miniParams.scale as [number, number, number]
                   : [1, 1, 1]
               } : undefined}
               onUpdate={(pos, scl) => setMiniParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
@@ -671,27 +700,31 @@ const MuseumCanvas: React.FC = () => {
               />
             )}
             {/* FramedArt exhibits */}
-            <FramedArt_Zahrawi1
-              ref={zahrawi1Ref} // Assign ref
-              mode={mode}
-              isUIVisible={isUIVisible} // Pass state
-              initialParams={zahrawi1Params}
-              onUpdate={(pos, scl) => setZahrawi1Params({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
-            />
-            <FramedArt_CheshmManuscript
-              ref={cheshmManuscriptRef} // Assign ref
-              mode={mode}
-              isUIVisible={isUIVisible} // Pass state
-              initialParams={cheshmManuscriptParams}
-              onUpdate={(pos, scl) => setCheshmManuscriptParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
-            />
-            <FramedArt_800pxMedizinKlimt
-              ref={medizinKlimtRef} // Assign ref
-              mode={mode}
-              isUIVisible={isUIVisible} // Pass state
-              initialParams={medizinKlimtParams}
-              onUpdate={(pos, scl) => setMedizinKlimtParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
-            />
+            {areFramedArtVisible && (
+              <>
+                <FramedArt_Zahrawi1
+                  ref={zahrawi1Ref} // Assign ref
+                  mode={mode}
+                  isUIVisible={isUIVisible} // Pass state
+                  initialParams={zahrawi1Params}
+                  onUpdate={(pos, scl) => setZahrawi1Params({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
+                />
+                <FramedArt_CheshmManuscript
+                  ref={cheshmManuscriptRef} // Assign ref
+                  mode={mode}
+                  isUIVisible={isUIVisible} // Pass state
+                  initialParams={cheshmManuscriptParams}
+                  onUpdate={(pos, scl) => setCheshmManuscriptParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
+                />
+                <FramedArt_800pxMedizinKlimt
+                  ref={medizinKlimtRef} // Assign ref
+                  mode={mode}
+                  isUIVisible={isUIVisible} // Pass state
+                  initialParams={medizinKlimtParams}
+                  onUpdate={(pos, scl) => setMedizinKlimtParams({ position: pos as [number, number, number], scale: scl as [number, number, number] })}
+                />
+              </>
+            )}
           </Museum>
           
           {controlMode === 'orbit' ? (

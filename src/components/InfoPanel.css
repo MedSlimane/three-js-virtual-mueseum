@@ -1,31 +1,80 @@
 .info-panel {
   position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.7);
+  top: 20px; /* Add top margin */
+  left: 20px; /* Add left margin */
+  height: calc(100vh - 40px); /* Adjust height for top/bottom margin */
+  width: 300px;
+  background-color: rgba(0, 0, 0, 0.8);
   color: white;
-  padding: 15px 25px;
-  border-radius: 8px;
-  max-width: 80%;
-  text-align: center;
+  padding: 20px;
+  border-radius: 15px; /* Make it rounder */
   font-family: 'BigShouldersDisplay-Light', sans-serif;
   font-size: 1.1em;
-  z-index: 100; /* Ensure it's above the canvas */
-  display: flex; /* Use flexbox for layout */
-  align-items: center; /* Center items vertically */
-  gap: 15px; /* Add space between image and text */
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 20px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  transition: transform 0.3s ease, opacity 0.3s ease; /* Update transition properties */
+  transform: translateX(0); /* Start fully visible */
+  opacity: 1;
+}
+
+/* Styles for the collapsed state - Translate off-screen */
+.info-panel.collapsed {
+  transform: translateX(calc(-100% - 20px)); /* Move left off-screen (full width + left margin) */
+  opacity: 0.8; /* Slightly visible for debugging, can set to 0 */
+  pointer-events: none; /* Prevent interaction when hidden */
+}
+
+.info-panel.collapsed p,
+.info-panel.collapsed .info-panel-image {
+  display: block; /* Ensure they are not hidden by previous rules */
 }
 
 .info-panel p {
-  margin: 0; /* Remove default paragraph margin */
+  margin: 0;
+  text-align: left;
+  width: 100%;
 }
 
 /* Style for the image within the info panel */
 .info-panel-image {
-  max-width: 80px; /* Limit image width */
-  max-height: 80px; /* Limit image height */
+  width: 100%;
+  max-height: 250px; /* Increase max height significantly */
   height: auto; /* Maintain aspect ratio */
-  border-radius: 4px; /* Slightly rounded corners */
-  object-fit: cover; /* Cover the area, cropping if needed */
+  border-radius: 8px; /* Rounder image corners */
+  object-fit: cover; /* Cover the area */
+}
+
+/* Style for the toggle button */
+.info-panel-toggle-button {
+  position: absolute;
+  top: 10px;
+  right: 10px; /* Position top-right */
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 50%; /* Make it circular */
+  width: 30px;
+  height: 30px;
+  font-size: 1.2em;
+  line-height: 30px; /* Center text vertically */
+  text-align: center;
+  cursor: pointer;
+  z-index: 101; /* Ensure button is above other content */
+  padding: 0;
+  pointer-events: all; /* Ensure button is always clickable */
+  transition: transform 0.3s ease; /* Add transition for button movement */
+}
+
+.info-panel.collapsed .info-panel-toggle-button {
+  transform: translateX(calc(300px + 10px)); /* Move right by panel width + some padding */
+}
+
+.info-panel-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.4);
 }

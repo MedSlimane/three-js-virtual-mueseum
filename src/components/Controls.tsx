@@ -5,8 +5,10 @@ interface ControlsProps {
   setDebug: (value: boolean) => void;
   controlMode: 'orbit' | 'firstPerson';
   setControlMode: (mode: 'orbit' | 'firstPerson') => void;
-  isUIVisible: boolean; // Add prop
-  setIsUIVisible: (value: boolean) => void; // Add prop
+  isUIVisible: boolean;
+  setIsUIVisible: (value: boolean) => void;
+  areFramedArtVisible: boolean; // Add prop for framed art visibility state
+  toggleFramedArt: () => void; // Add prop for the toggle handler function
 }
 
 const Controls: React.FC<ControlsProps> = ({ 
@@ -14,8 +16,10 @@ const Controls: React.FC<ControlsProps> = ({
   setDebug,
   controlMode,
   setControlMode,
-  isUIVisible, // Destructure prop
-  setIsUIVisible // Destructure prop
+  isUIVisible,
+  setIsUIVisible,
+  areFramedArtVisible, // Destructure prop
+  toggleFramedArt // Destructure prop
 }) => {
   const handleControlModeChange = () => {
     // Force exit pointer lock if switching from first person to orbit mode
@@ -37,9 +41,11 @@ const Controls: React.FC<ControlsProps> = ({
       <button onClick={handleControlModeChange}>
         {controlMode === 'orbit' ? 'First Person Mode' : 'Orbit Mode'}
       </button>
-      {/* Add UI Toggle Button */}
       <button onClick={() => setIsUIVisible(!isUIVisible)}>
         {isUIVisible ? 'Hide UI (H)' : 'Show UI (H)'}
+      </button>
+      <button onClick={toggleFramedArt}> 
+        {areFramedArtVisible ? 'Hide Pictures (;)' : 'Show Pictures (;)'}
       </button>
     </div>
   );
